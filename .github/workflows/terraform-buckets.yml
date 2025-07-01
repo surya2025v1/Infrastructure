@@ -1,0 +1,85 @@
+name: Terraform Buckets
+
+on:
+  push:
+    paths:
+      - 'buckets/**'
+  pull_request:
+    paths:
+      - 'buckets/**'
+
+jobs:
+  detect-changed-buckets:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.filter.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed bucket directories
+        id: filter
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+          echo "Changed files: $CHANGED_FILES"
+          # Find unique bucket directories
+          CHANGED_BUCKETS=$(echo "$CHANGED_FILES" | grep '^buckets/' | awk -F'/' '{print $2}' | sort | uniq | tr '\n' ' ')
+          echo "Changed buckets: $CHANGED_BUCKETS"
+          echo "changed=$CHANGED_BUCKETS" >> $GITHUB_OUTPUT
+
+  terraform-buckets:
+    needs: detect-changed-buckets
+    runs-on: ubuntu-latest
+    if: needs.detect-changed-buckets.outputs.changed != ''
+    strategy:
+      matrix:
+        bucket: ${{ fromJson('['''${{ needs.detect-changed-buckets.outputs.changed }}''']' | toJson | gsub(" "; ",") ) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Read action from tfvars
+        id: tfvars
+        working-directory: buckets/${{ matrix.bucket }}
+        run: |
+          CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          echo "create=$CREATE" >> $GITHUB_OUTPUT
+          echo "delete=$DELETE" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        if: steps.tfvars.outputs.create == 'true' || steps.tfvars.outputs.delete == 'true'
+        working-directory: buckets/${{ matrix.bucket }}
+        run: terraform init
+
+      - name: Terraform Plan & Apply
+        if: steps.tfvars.outputs.create == 'true'
+        working-directory: buckets/${{ matrix.bucket }}
+        run: |
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: steps.tfvars.outputs.delete == 'true'
+        working-directory: buckets/${{ matrix.bucket }}
+        run: terraform destroy -auto-approve
+
+      - name: Output summary
+        if: steps.tfvars.outputs.create == 'true' || steps.tfvars.outputs.delete == 'true'
+        working-directory: buckets/${{ matrix.bucket }}
+        run: |
+          echo "## Terraform action for ${{ matrix.bucket }}" >> $GITHUB_STEP_SUMMARY
+          echo "Create: ${{ steps.tfvars.outputs.create }}" >> $GITHUB_STEP_SUMMARY
+          echo "Delete: ${{ steps.tfvars.outputs.delete }}" >> $GITHUB_STEP_SUMMARY 

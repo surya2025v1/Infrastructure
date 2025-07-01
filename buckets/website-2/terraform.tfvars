@@ -25,4 +25,8 @@ tags = {
 
 # Tag configuration
 controlled_by = "Terraform"
-client = "TBD" 
+client = "TBD"
+
+# Pipeline control flags
+create = true
+delete = false 

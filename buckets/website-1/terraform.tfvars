@@ -24,4 +24,8 @@ tags = {
 
 # Tag configuration
 controlled_by = "Terraform"
-client = "Web_managment" 
+client = "Web_managment"
+
+# Pipeline control flags
+create = true
+delete = false 
