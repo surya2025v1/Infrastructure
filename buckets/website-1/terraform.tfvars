@@ -1,5 +1,3 @@
-# Configuration for website-1 bucket
-
 aws_region = "us-east-2"
 bucket_name = "svtemple.org1"
 environment = "prod"
