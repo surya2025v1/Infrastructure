@@ -24,6 +24,7 @@ tags = {
   client = "Web_managment"
 }
 
+client = "SV_temple"
 
 # Pipeline control flags
 create = true

@@ -12,6 +12,16 @@ terraform {
   }
 }
 
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state-bucket-123456"
+    key            = "global/s3/website-2/terraform.tfstate"
+    region         = "us-east-2"
+    dynamodb_table = "TerraformStateLock"
+    encrypt        = true
+  }
+}
+
 # Configure AWS Provider
 provider "aws" {
   region = var.aws_region
@@ -20,8 +30,9 @@ provider "aws" {
     tags = {
       Project     = "StaticWebsites"
       Environment = var.environment
+      client      = var.client
       ManagedBy   = "Terraform"
-      BucketName  = "website-2"
+      BucketName  = "website-1"
     }
   }
 }
