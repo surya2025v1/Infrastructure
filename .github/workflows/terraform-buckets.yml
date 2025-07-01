@@ -31,8 +31,10 @@ jobs:
           echo "Changed files: $CHANGED_FILES"
           # Find unique bucket directories
           CHANGED_BUCKETS=$(echo "$CHANGED_FILES" | grep '^buckets/' | awk -F'/' '{print $2}' | sort | uniq | tr '\n' ' ')
-          echo "Changed buckets: $CHANGED_BUCKETS"
-          echo "changed=$CHANGED_BUCKETS" >> $GITHUB_OUTPUT
+          # Convert to JSON array
+          CHANGED_BUCKETS_JSON=$(echo "$CHANGED_BUCKETS" | jq -R -s -c 'split(" ") | map(select(length > 0))')
+          echo "Changed buckets: $CHANGED_BUCKETS_JSON"
+          echo "changed=$CHANGED_BUCKETS_JSON" >> $GITHUB_OUTPUT
 
   terraform-buckets:
     needs: detect-changed-buckets
@@ -40,7 +42,7 @@ jobs:
     if: needs.detect-changed-buckets.outputs.changed != ''
     strategy:
       matrix:
-        bucket: ${{ fromJson('['''${{ needs.detect-changed-buckets.outputs.changed }}''']' | toJson | gsub(" "; ",") ) }}
+        bucket: ${{ fromJson(needs.detect-changed-buckets.outputs.changed) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
