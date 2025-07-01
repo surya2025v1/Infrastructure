@@ -36,7 +36,10 @@ jobs:
   website-1-stage:
     needs: setup
     runs-on: ubuntu-latest
-    if: ${{ contains(join(github.event.commits.*.modified, ' '), 'buckets/website-1/') || contains(join(github.event.commits.*.added, ' '), 'buckets/website-1/') || contains(join(github.event.commits.*.removed, ' '), 'buckets/website-1/') }}
+    environment: prod
+    # Only run this job if buckets/website-1/terraform.tfvars changes
+    paths:
+      - 'buckets/website-1/terraform.tfvars'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -23,7 +23,7 @@ tags = {
   controlled_by = "Terraform"
 }
 
-client ="svtemple.org" 
+client ="svtemple.org"  
 
 # Pipeline control flags
 create = true
