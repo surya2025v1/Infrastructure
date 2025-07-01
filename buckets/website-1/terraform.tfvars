@@ -20,11 +20,11 @@ tags = {
   Environment = "dev"
   Owner       = "DevOps"
   Purpose     = "Website-1"
+  controlled_by = "Terraform"
+  client = "Web_managment"
 }
 
-# Tag configuration
-controlled_by = "Terraform"
-client = "Web_managment"
+
 
 # Pipeline control flags
 create = true
