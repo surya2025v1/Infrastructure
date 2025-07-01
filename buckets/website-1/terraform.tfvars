@@ -2,8 +2,6 @@ aws_region = "us-east-2"
 bucket_name = "svtemple.org1"
 environment = "prod"
 
-
-
 # Versioning configuration
 enable_versioning = false
 
