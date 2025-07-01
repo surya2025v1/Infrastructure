@@ -38,17 +38,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
-<<<<<<< HEAD
-    # Only run this job if buckets/website-1/terraform.tfvars changes
-    paths:
-      - 'buckets/website-1/terraform.tfvars'
-=======
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      contains(join(github.event.commits.*.modified, ' '), 'buckets/website-1/terraform.tfvars') ||
-      contains(join(github.event.commits.*.added, ' '), 'buckets/website-1/terraform.tfvars') ||
-      contains(join(github.event.commits.*.removed, ' '), 'buckets/website-1/terraform.tfvars')
->>>>>>> 8c0c66320d8639c64072ebe1ec97b1898514ead0
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'buckets/website-1/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'buckets/website-1/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'buckets/website-1/terraform.tfvars')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,6 +52,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
           AWS_SESSION_TOKEN: ${{ needs.setup.outputs.aws_session_token }}
+          AWS_DEFAULT_REGION: us-east-2
         run: |
           set -e
           terraform init
