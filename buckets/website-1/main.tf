@@ -14,7 +14,7 @@ terraform {
 
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state-bucket-123456"
+    bucket         = "my-terraform-state-bucket-20250701"
     key            = "global/s3/website-1/terraform.tfstate"
     region         = "us-east-2"
     dynamodb_table = "TerraformStateLock"
@@ -44,9 +44,6 @@ module "s3_static_website" {
   bucket_name = var.bucket_name
   environment = var.environment
   
-  index_html_path = "index.html"
-  create_error_page = var.create_error_page
-  error_html_path = "error.html"
   
   enable_versioning = var.enable_versioning
   enable_cloudfront = var.enable_cloudfront

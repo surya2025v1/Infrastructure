@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'buckets/**'
+  workflow_dispatch:
 
 jobs:
   setup:
@@ -37,9 +38,17 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
+<<<<<<< HEAD
     # Only run this job if buckets/website-1/terraform.tfvars changes
     paths:
       - 'buckets/website-1/terraform.tfvars'
+=======
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(join(github.event.commits.*.modified, ' '), 'buckets/website-1/terraform.tfvars') ||
+      contains(join(github.event.commits.*.added, ' '), 'buckets/website-1/terraform.tfvars') ||
+      contains(join(github.event.commits.*.removed, ' '), 'buckets/website-1/terraform.tfvars')
+>>>>>>> 8c0c66320d8639c64072ebe1ec97b1898514ead0
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
