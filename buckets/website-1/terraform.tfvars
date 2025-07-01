@@ -21,7 +21,6 @@ tags = {
   Owner       = "DevOps"
   Purpose     = "Website-1"
   controlled_by = "Terraform"
-  client = "svtemple.org"
 }
 
 client ="svtemple.org"

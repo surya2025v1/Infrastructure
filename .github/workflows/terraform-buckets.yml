@@ -11,6 +11,7 @@ on:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    environment: prod
     outputs:
       aws_access_key_id: ${{ steps.assume_role.outputs.aws_access_key_id }}
       aws_secret_access_key: ${{ steps.assume_role.outputs.aws_secret_access_key }}
