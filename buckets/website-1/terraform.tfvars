@@ -1,8 +1,8 @@
 # Configuration for website-1 bucket
 
-aws_region = "us-east-1"
-bucket_name = "website-1-static-site"
-environment = "dev"
+aws_region = "us-east-2"
+bucket_name = "svtemple.org1"
+environment = "prod"
 
 
 
@@ -21,10 +21,10 @@ tags = {
   Owner       = "DevOps"
   Purpose     = "Website-1"
   controlled_by = "Terraform"
-  client = "Web_managment"
+  client = "svtemple.org"
 }
 
-client = "SV_temple"
+client ="svtemple.org"
 
 # Pipeline control flags
 create = true
