@@ -38,7 +38,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
-    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'lambda/common/terraform.tfvars')
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'api-gateway-lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'api-gateway-lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'api-gateway-lambda/common/terraform.tfvars')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
         with:
           terraform_version: 1.5.0
       - name: Terraform Init, Plan, Apply/Destroy
-        working-directory: lambda/common
+        working-directory: api-gateway-lambda/common
         env:
           AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
