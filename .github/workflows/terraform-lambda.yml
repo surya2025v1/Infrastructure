@@ -1,0 +1,91 @@
+name: Terraform Lambda Function for Python API Storage
+
+on:
+  push:
+    paths:
+      - 'lambda/**'
+  pull_request:
+    paths:
+      - 'lambda/**'
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    environment: prod
+    outputs:
+      aws_access_key_id: ${{ steps.assume_role.outputs.aws_access_key_id }}
+      aws_secret_access_key: ${{ steps.assume_role.outputs.aws_secret_access_key }}
+      aws_session_token: ${{ steps.assume_role.outputs.aws_session_token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Assume My_Infra_Role and export credentials
+        id: assume_role
+        run: |
+          CREDS_JSON=$(aws sts assume-role \
+            --role-arn arn:aws:iam::103056765659:role/My_Infra_Role \
+            --role-session-name github-actions-lambda-pythonapi-session)
+          echo "aws_access_key_id=$(echo $CREDS_JSON | jq -r .Credentials.AccessKeyId)" >> $GITHUB_OUTPUT
+          echo "aws_secret_access_key=$(echo $CREDS_JSON | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_OUTPUT
+          echo "aws_session_token=$(echo $CREDS_JSON | jq -r .Credentials.SessionToken)" >> $GITHUB_OUTPUT
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
+
+  lambda-common-stage:
+    needs: setup
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'lambda/common/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'lambda/common/terraform.tfvars')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Init, Plan, Apply/Destroy
+        working-directory: lambda/common
+        env:
+          AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ needs.setup.outputs.aws_session_token }}
+          AWS_DEFAULT_REGION: us-east-2
+        run: |
+          set -e
+          terraform init
+          terraform plan -out=tfplan
+
+          CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+
+          echo "Create flag: $CREATE"
+          echo "Delete flag: $DELETE"
+
+          if [ "$CREATE" = "true" ]; then
+            echo "Running terraform apply..."
+            terraform apply -auto-approve tfplan
+            echo "✅ lambda function created/updated successfully"
+            
+            # Output bucket information
+            echo "📦 Bucket Name: $(terraform output -raw bucket_name)"
+            echo "🔗 Bucket ARN: $(terraform output -raw bucket_arn)"
+            echo "🌍 Bucket Region: $(terraform output -raw bucket_region)"
+          fi
+
+          if [ "$DELETE" = "true" ]; then
+            echo "Running terraform destroy..."
+            terraform destroy -auto-approve
+            echo "🗑️ lambda function destroyed successfully"
+          fi
+
+          if [ "$CREATE" != "true" ] && [ "$DELETE" != "true" ]; then
+            echo "ℹ️ No action required. Both create and delete flags are false."
+          fi
+      - name: Cleanup AWS credentials
+        run: |
+          echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV 
