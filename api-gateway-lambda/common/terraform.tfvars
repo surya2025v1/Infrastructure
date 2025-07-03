@@ -143,7 +143,7 @@ lambda_functions = {
 api_gateway_lambda_integrations = {
   # Main API endpoint
   main_api = {
-    path_part        = "api"
+    path_part        = "api/v1/login"
     lambda_function_name = "np-managment-main-api"
     http_methods     = ["GET", "POST", "PUT", "DELETE"]
     enable_proxy     = false
