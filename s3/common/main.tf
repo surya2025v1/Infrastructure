@@ -1,5 +1,5 @@
-# Terraform configuration for website-1 bucket
-# This file references the S3 static website module
+# Terraform configuration for S3 API Storage bucket
+# This file references the S3 module for Python API storage
 
 terraform {
   required_version = ">= 1.0"
@@ -15,7 +15,7 @@ terraform {
 terraform {
   backend "s3" {
     bucket         = "my-terraform-state-bucket-20250701"
-    key            = "global/s3/website-1/terraform.tfstate"
+    key            = "global/s3/common/terraform.tfstate"
     region         = "us-east-2"
     dynamodb_table = "TerraformStateLock"
     encrypt        = true
@@ -28,28 +28,25 @@ provider "aws" {
   
   default_tags {
     tags = {
-      Project     = "StaticWebsites"
+      Project     = "Python-API-Storage"
       Environment = var.environment
       client      = var.client
       ManagedBy   = "Terraform"
-      BucketName  = "website-1"
+      BucketName  = "common"
     }
   }
 }
 
-# S3 Static Website Module
-module "s3_static_website" {
-  source = "../../modules/s3-static-website"
-
+# S3 Module for Python API Storage
+module "s3_api_storage" {
+  source = "../../modules/s3"
+  
   bucket_name = var.bucket_name
   environment = var.environment
-  
   enable_versioning = var.enable_versioning
-  enable_cloudfront = var.enable_cloudfront
-  cloudfront_price_class = var.cloudfront_price_class
-  cloudfront_aliases = var.cloudfront_aliases
-  
   tags = var.tags
   controlled_by = var.controlled_by
   client = var.client
+  create = var.create
+  delete = var.delete
 } 

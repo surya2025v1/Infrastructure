@@ -1,12 +1,12 @@
-name: Terraform Buckets
+name: Terraform S3 Python API Storage
 
 on:
   push:
     paths:
-      - 'buckets/**'
+      - 's3/**'
   pull_request:
     paths:
-      - 'buckets/**'
+      - 's3/**'
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         run: |
           CREDS_JSON=$(aws sts assume-role \
             --role-arn arn:aws:iam::103056765659:role/My_Infra_Role \
-            --role-session-name github-actions-session)
+            --role-session-name github-actions-s3-pythonapi-session)
           echo "aws_access_key_id=$(echo $CREDS_JSON | jq -r .Credentials.AccessKeyId)" >> $GITHUB_OUTPUT
           echo "aws_secret_access_key=$(echo $CREDS_JSON | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_OUTPUT
           echo "aws_session_token=$(echo $CREDS_JSON | jq -r .Credentials.SessionToken)" >> $GITHUB_OUTPUT
@@ -34,11 +34,11 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-2
 
-  website-1-stage:
+  s3-common-stage:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
-    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'buckets/website-1/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'buckets/website-1/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'buckets/website-1/terraform.tfvars')
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 's3/common/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 's3/common/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 's3/common/terraform.tfvars')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
         with:
           terraform_version: 1.5.0
       - name: Terraform Init, Plan, Apply/Destroy
-        working-directory: buckets/website-1
+        working-directory: s3/common
         env:
           AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
@@ -61,19 +61,32 @@ jobs:
           CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
           DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
 
+          echo "Create flag: $CREATE"
+          echo "Delete flag: $DELETE"
+
           if [ "$CREATE" = "true" ]; then
             echo "Running terraform apply..."
             terraform apply -auto-approve tfplan
+            echo "✅ S3 bucket created/updated successfully"
+            
+            # Output bucket information
+            echo "📦 Bucket Name: $(terraform output -raw bucket_name)"
+            echo "🔗 Bucket ARN: $(terraform output -raw bucket_arn)"
+            echo "🌍 Bucket Region: $(terraform output -raw bucket_region)"
           fi
 
           if [ "$DELETE" = "true" ]; then
             echo "Running terraform destroy..."
             terraform destroy -auto-approve
+            echo "🗑️ S3 bucket destroyed successfully"
+          fi
+
+          if [ "$CREATE" != "true" ] && [ "$DELETE" != "true" ]; then
+            echo "ℹ️ No action required. Both create and delete flags are false."
           fi
       - name: Cleanup AWS credentials
         if: always()
         run: |
           echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
-          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV
- 
+          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV 

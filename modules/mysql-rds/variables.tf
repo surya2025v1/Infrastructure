@@ -110,4 +110,5 @@ variable "vpc_id" {
 variable "lambda_security_group_ids" {
   description = "List of Lambda security group IDs allowed to access MySQL."
   type        = list(string)
+  default     = []
 } 

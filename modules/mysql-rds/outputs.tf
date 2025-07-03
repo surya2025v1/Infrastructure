@@ -1,6 +1,6 @@
 output "db_instance_identifier" {
-  description = "The RDS instance identifier."
-  value       = aws_db_instance.this.id
+  description = "The RDS instance identifier (name)."
+  value       = aws_db_instance.this.identifier
 }
 
 output "db_instance_endpoint" {
