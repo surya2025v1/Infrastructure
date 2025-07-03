@@ -42,6 +42,9 @@ enable_monitoring = false
 # CORS Configuration
 cors_origins = [
   "*",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:8080",
   "https://www.temple.com", 
   "https://admin.temple.com",
   "https://app.temple.com"
@@ -123,8 +126,8 @@ lambda_functions = {
       LOG_LEVEL   = "INFO"
       SERVICE     = "np-management-api"
       # Security environment variables
-      ALLOWED_ORIGINS = "https://temple.com,https://www.temple.com,https://admin.temple.com,https://app.temple.com"
-      API_KEY_REQUIRED = "true"
+      ALLOWED_ORIGINS = "http://localhost:5173"
+      API_KEY_REQUIRED = "false"
       RATE_LIMIT_ENABLED = "true"
       RATE_LIMIT_REQUESTS = "100"
     }
@@ -141,14 +144,14 @@ lambda_functions = {
 
 # API Gateway Lambda Integrations (Path-based routing)
 api_gateway_lambda_integrations = {
-  # Main API endpoint
-  main_api = {
-    path_part        = "api/v1/login"
+  # API proxy to handle /api/v1/* paths (and all sub-paths)
+  api_proxy = {
+    path_part        = "api"
     lambda_function_name = "np-managment-main-api"
-    http_methods     = ["GET", "POST", "PUT", "DELETE"]
-    enable_proxy     = false
+    http_methods     = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    enable_proxy     = true
     proxy_path_part  = "{proxy+}"
-    require_api_key  = true
+    require_api_key  = false
     rate_limit       = 100
   }
 } 
