@@ -3,7 +3,7 @@ aws_region = "us-east-2"
 environment = "dev"
 
 # S3 bucket configuration
-bucket_name = "Fast-api-python-storage-common"
+bucket_name = "python-api-storage-common"
 enable_versioning = true
 
 # Additional tags
