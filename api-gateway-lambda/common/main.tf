@@ -3,7 +3,7 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -25,13 +25,13 @@ terraform {
 # Configure AWS Provider
 provider "aws" {
   region = var.aws_region
-  
+
   default_tags {
     tags = {
-      Project     = "Temple-Project-API-Gateway"
-      Environment = var.environment
-      client      = var.client
-      ManagedBy   = "Terraform"
+      Project      = "Temple-Project-API-Gateway"
+      Environment  = var.environment
+      client       = var.client
+      ManagedBy    = "Terraform"
       FunctionName = "common"
     }
   }
@@ -47,28 +47,25 @@ module "lambda_functions" {
   source   = "../../modules/lambda"
   for_each = var.lambda_functions
 
-  function_name           = each.value.function_name
-  environment             = var.environment
-  handler                 = each.value.handler
-  runtime                 = each.value.runtime
-  environment_variables   = merge(each.value.environment_variables, {
-    DB_CREDENTIALS_SECRET_ARN = data.aws_secretsmanager_secret.db_credentials.arn
-  })
-  memory_size             = each.value.memory_size
-  timeout                 = each.value.timeout
-  vpc_subnet_ids          = each.value.vpc_subnet_ids
-  vpc_security_group_ids  = each.value.vpc_security_group_ids
-  role_arn                = each.value.role_arn
-  tags                    = merge(var.tags, {
+  function_name         = each.value.function_name
+  handler               = each.value.handler
+  runtime               = each.value.runtime
+  environment_variables = each.value.environment_variables
+  memory_size           = each.value.memory_size
+  timeout               = each.value.timeout
+  role_arn              = each.value.role_arn
+  tags = merge(var.tags, {
     Component = "Lambda-${each.key}"
   })
-  controlled_by           = var.controlled_by
-  client                  = var.client
-  create                  = each.value.create
-  delete                  = each.value.delete
-  s3_bucket               = each.value.s3_bucket
-  s3_key                  = each.value.s3_key
-  s3_object_version       = each.value.s3_object_version
+  environment       = var.environment
+  controlled_by     = var.controlled_by
+  client            = var.client
+  create            = each.value.create
+  delete            = each.value.delete
+  s3_bucket         = each.value.s3_bucket
+  s3_key            = each.value.s3_key
+  s3_object_version = each.value.s3_object_version
+  rds_secret_name   = var.rds_secret_name
 }
 
 # Create map of Lambda function names to their invoke ARNs
@@ -87,41 +84,42 @@ module "api_gateway" {
   endpoint_type         = var.api_gateway_endpoint_type
   lambda_integrations   = var.api_gateway_lambda_integrations
   lambda_function_arns  = local.lambda_function_arns
-  stage_name           = var.api_gateway_stage_name
+  stage_name            = var.api_gateway_stage_name
+  ignore_existing_stage = var.ignore_existing_stage
   authorization_type    = var.api_gateway_authorization_type
   authorizer_id         = var.api_gateway_authorizer_id
   enable_logging        = var.api_gateway_enable_logging
   log_retention_days    = var.api_gateway_log_retention_days
-  environment          = var.environment
-  client               = var.client
-  controlled_by        = var.controlled_by
-  create               = var.create_api_gateway
-  tags                 = merge(var.tags, {
+  environment           = var.environment
+  client                = var.client
+  controlled_by         = var.controlled_by
+  create                = var.create_api_gateway
+  tags = merge(var.tags, {
     Component = "API-Gateway"
   })
-  
+
   # Security Configuration
-  enable_waf           = var.enable_waf
-  enable_usage_plans   = var.enable_usage_plans
-  enable_monitoring    = var.enable_monitoring
-  
+  enable_waf         = var.enable_waf
+  enable_usage_plans = var.enable_usage_plans
+  enable_monitoring  = var.enable_monitoring
+
   # CORS Configuration
-  cors_origins         = var.cors_origins
+  cors_origins           = var.cors_origins
   cors_allow_credentials = var.cors_allow_credentials
-  cors_allow_methods   = var.cors_allow_methods
-  cors_allow_headers   = var.cors_allow_headers
-  cors_expose_headers  = var.cors_expose_headers
-  cors_max_age         = var.cors_max_age
-  
+  cors_allow_methods     = var.cors_allow_methods
+  cors_allow_headers     = var.cors_allow_headers
+  cors_expose_headers    = var.cors_expose_headers
+  cors_max_age           = var.cors_max_age
+
   # Rate Limiting Configuration
-  rate_limit           = var.rate_limit
-  burst_limit          = var.burst_limit
-  quota_limit          = var.quota_limit
-  quota_period         = var.quota_period
-  
+  rate_limit   = var.rate_limit
+  burst_limit  = var.burst_limit
+  quota_limit  = var.quota_limit
+  quota_period = var.quota_period
+
   # API Keys Configuration
-  api_keys             = var.api_keys
-  
+  api_keys = var.api_keys
+
   # Security Headers Configuration
-  security_headers     = var.security_headers
-} 
+  security_headers = var.security_headers
+}

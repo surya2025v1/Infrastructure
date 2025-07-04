@@ -1,6 +1,12 @@
 # Data source for current AWS region
 data "aws_region" "current" {}
 
+# Local values to handle existing stages
+locals {
+  # Since we can't check if stage exists via data source, we'll use a variable to control behavior
+  should_create_stage = var.create && var.ignore_existing_stage
+}
+
 # API Gateway REST API
 resource "aws_api_gateway_rest_api" "this" {
   count = var.create ? 1 : 0
@@ -242,9 +248,9 @@ resource "aws_api_gateway_integration_response" "lambda_options_integration_resp
   status_code = aws_api_gateway_method_response.lambda_options_method_responses[each.key].status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'${join("','", var.cors_allow_headers)}'"
-    "method.response.header.Access-Control-Allow-Methods" = "'${join("','", var.cors_allow_methods)}'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'${join("','", var.cors_origins)}'"
+    "method.response.header.Access-Control-Allow-Headers" = "'${join(",", var.cors_allow_headers)}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'${join(",", var.cors_allow_methods)}'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${join(",", var.cors_origins)}'"
     "method.response.header.Access-Control-Allow-Credentials" = "'${var.cors_allow_credentials}'"
     "method.response.header.Access-Control-Max-Age" = "'${var.cors_max_age}'"
   }
@@ -263,9 +269,9 @@ resource "aws_api_gateway_integration_response" "lambda_proxy_options_integratio
   status_code = aws_api_gateway_method_response.lambda_proxy_options_method_responses[each.key].status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'${join("','", var.cors_allow_headers)}'"
-    "method.response.header.Access-Control-Allow-Methods" = "'${join("','", var.cors_allow_methods)}'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'${join("','", var.cors_origins)}'"
+    "method.response.header.Access-Control-Allow-Headers" = "'${join(",", var.cors_allow_headers)}'"
+    "method.response.header.Access-Control-Allow-Methods" = "'${join(",", var.cors_allow_methods)}'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${join(",", var.cors_origins)}'"
     "method.response.header.Access-Control-Allow-Credentials" = "'${var.cors_allow_credentials}'"
     "method.response.header.Access-Control-Max-Age" = "'${var.cors_max_age}'"
   }
@@ -310,7 +316,7 @@ resource "aws_api_gateway_deployment" "this" {
 
 # API Gateway Stage
 resource "aws_api_gateway_stage" "this" {
-  count = var.create ? 1 : 0
+  count = local.should_create_stage ? 1 : 0
 
   deployment_id = aws_api_gateway_deployment.this[0].id
   rest_api_id   = aws_api_gateway_rest_api.this[0].id
@@ -353,7 +359,7 @@ resource "aws_api_gateway_method_settings" "main" {
   count = var.create ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.this[0].id
-  stage_name  = aws_api_gateway_stage.this[0].stage_name
+  stage_name  = var.stage_name
   method_path = "*/*"
 
   settings {

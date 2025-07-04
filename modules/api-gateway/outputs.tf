@@ -35,7 +35,12 @@ output "api_gateway_deployment_id" {
 
 output "api_gateway_stage_arn" {
   description = "ARN of the API Gateway stage"
-  value       = var.create ? aws_api_gateway_stage.this[0].arn : null
+  value       = var.create ? (local.should_create_stage ? aws_api_gateway_stage.this[0].arn : "arn:aws:apigateway:${data.aws_region.current.name}::/restapis/${aws_api_gateway_rest_api.this[0].id}/stages/${var.stage_name}") : null
+}
+
+output "api_gateway_stage_exists" {
+  description = "Whether the API Gateway stage was created or already existed"
+  value       = var.create ? !local.should_create_stage : false
 }
 
 output "lambda_integration_endpoints" {

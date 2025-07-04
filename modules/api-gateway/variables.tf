@@ -4,6 +4,12 @@ variable "create" {
   default     = true
 }
 
+variable "ignore_existing_stage" {
+  description = "When true, creates a new stage even if one exists (may cause conflicts). When false, skips stage creation if stage already exists."
+  type        = bool
+  default     = false
+}
+
 variable "api_name" {
   description = "Name of the API Gateway REST API"
   type        = string

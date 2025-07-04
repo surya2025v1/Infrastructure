@@ -1,92 +1,166 @@
-# Lambda Module
+# Lambda Module with RDS MySQL Connection
 
-This Terraform module deploys an AWS Lambda function (Python 3.11, FastAPI-ready) with security group and conditional creation/deletion.
+This Terraform module creates an AWS Lambda function with optional RDS MySQL connection capabilities using AWS Secrets Manager.
 
 ## Features
 
-- **Lambda Function**: Python 3.11 runtime with configurable memory and timeout
-- **Security Group**: VPC security group with outbound access (if VPC configured)
-- **Conditional Creation**: Use `create` flag to control deployment
-- **Comprehensive Tagging**: Consistent tagging across all resources
-- **External IAM Role**: Uses externally created IAM role for Lambda execution
+- Create Lambda functions with custom runtime and configuration
+- Automatic RDS MySQL connection setup using AWS Secrets Manager
+- VPC configuration support
+- Security group management for Lambda-RDS communication
+- Environment variable injection for database connection details
 
-## Usage Example
+## RDS MySQL Connection
 
-```hcl
-module "lambda" {
-  source = "../../modules/lambda"
-  
-  function_name = "my-fastapi-lambda"
-  environment   = "prod"
-  handler       = "main.handler"
-  runtime       = "python3.11"
-  role_arn      = "arn:aws:iam::123456789012:role/lambda-exec-role"
-  
-  environment_variables = {
-    ENV = "prod"
-  }
-  
-  memory_size = 512
-  timeout     = 30
-  
-  # Optional VPC configuration
-  vpc_subnet_ids         = ["subnet-xxxxxx"]
-  vpc_security_group_ids = ["sg-xxxxxx"]
-  
-  tags = {
-    Project     = "FastAPI-Lambda"
-    Environment = "prod"
-    Owner       = "DevOps"
-    Purpose     = "API-Service"
-  }
-  
-  client = "myapp.com"
-  create = true
-  delete = false
+The module supports automatic RDS MySQL connection configuration by reading connection details from AWS Secrets Manager.
+
+### Secret Format
+
+The secret in AWS Secrets Manager should contain the following JSON structure:
+
+```json
+{
+  "host": "your-rds-endpoint.region.rds.amazonaws.com",
+  "port": "3306",
+  "database": "your_database_name",
+  "username": "your_username",
+  "password": "your_password"
 }
 ```
 
-## Required Variables
-- `function_name`: Name of the Lambda function
-- `role_arn`: IAM role ARN for Lambda execution (created externally)
+Alternative field names are also supported:
+- `host` or `endpoint`
+- `database` or `dbname`
+- `port` (defaults to 3306 if not specified)
 
-## Optional Variables
-- `environment`: Environment name (default: "dev")
-- `handler`: Entrypoint handler (default: "main.handler")
-- `runtime`: Lambda runtime (default: "python3.11")
-- `environment_variables`: Map of environment variables (default: {})
-- `memory_size`: Memory in MB (default: 512)
-- `timeout`: Timeout in seconds (default: 30)
-- `vpc_subnet_ids`: List of subnet IDs for VPC config (default: [])
-- `vpc_security_group_ids`: List of additional security group IDs (default: [])
-- `tags`: Map of tags to assign to resources (default: {})
-- `controlled_by`: Tag indicating what controls this resource (default: "Terraform")
-- `client`: Client name for the project (default: "TBD")
-- `create`: Flag to control Lambda function creation (default: true)
-- `delete`: Flag to control Lambda function deletion (default: false)
+## Usage
+
+### Basic Lambda Function
+
+```hcl
+module "lambda" {
+  source = "./modules/lambda"
+  
+  function_name = "my-lambda-function"
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role_arn      = aws_iam_role.lambda_role.arn
+  
+  environment = "dev"
+  client      = "myclient"
+}
+```
+
+### Lambda Function with RDS Connection
+
+```hcl
+module "lambda" {
+  source = "./modules/lambda"
+  
+  function_name = "my-lambda-function"
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role_arn      = aws_iam_role.lambda_role.arn
+  
+  # Enable RDS connection
+  enable_rds_connection = true
+  rds_secret_name       = "my-rds-connection-secret"
+  rds_secret_region     = "us-east-1"
+  
+  # VPC configuration (required for RDS connection)
+  vpc_subnet_ids = ["subnet-12345678", "subnet-87654321"]
+  
+  environment = "dev"
+  client      = "myclient"
+}
+```
+
+### Lambda Function with Custom RDS Configuration
+
+```hcl
+module "lambda" {
+  source = "./modules/lambda"
+  
+  function_name = "my-lambda-function"
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role_arn      = aws_iam_role.lambda_role.arn
+  
+  # RDS configuration
+  enable_rds_connection    = true
+  rds_secret_name         = "my-rds-connection-secret"
+  rds_connection_timeout  = 60
+  rds_max_connections     = 20
+  
+  # VPC configuration
+  vpc_subnet_ids = ["subnet-12345678", "subnet-87654321"]
+  
+  # Additional environment variables
+  environment_variables = {
+    LOG_LEVEL = "DEBUG"
+    API_VERSION = "v1"
+  }
+  
+  environment = "dev"
+  client      = "myclient"
+}
+```
+
+## Environment Variables
+
+When RDS connection is enabled, the following environment variables are automatically added to the Lambda function:
+
+- `RDS_SECRET_NAME`: The name of the secret used for connection
+- `RDS_SECRET_REGION`: The AWS region where the secret is stored
+- `RDS_HOST`: The RDS endpoint/host
+- `RDS_PORT`: The RDS port (default: 3306)
+- `RDS_DATABASE`: The database name
+- `RDS_USERNAME`: The database username
+- `RDS_PASSWORD`: The database password
+- `RDS_CONNECTION_TIMEOUT`: Connection timeout in seconds
+- `RDS_MAX_CONNECTIONS`: Maximum number of connections in the pool
+
+## Required IAM Permissions
+
+The Lambda execution role must have the following permissions for RDS connection:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": "arn:aws:secretsmanager:*:*:secret:your-secret-name*"
+    }
+  ]
+}
+```
+
+## Security
+
+- Database credentials are stored securely in AWS Secrets Manager
+- Lambda function runs in VPC with restricted access
+- Security groups are automatically configured for Lambda-RDS communication
+- No sensitive data is stored in environment variables (only secret references)
 
 ## Outputs
-- `lambda_function_name`: Name of the Lambda function (null if not created)
-- `lambda_function_arn`: ARN of the Lambda function (null if not created)
-- `lambda_invoke_arn`: Invoke ARN of the Lambda function (null if not created)
-- `lambda_security_group_id`: ID of the Lambda security group (null if not VPC)
 
-## Security Features
+- `lambda_function_name`: Name of the Lambda function
+- `lambda_function_arn`: ARN of the Lambda function
+- `lambda_invoke_arn`: Invoke ARN of the Lambda function
+- `lambda_security_group_id`: ID of the Lambda security group
+- `rds_secret_name`: Name of the RDS secret used for connection
+- `rds_connection_enabled`: Whether RDS connection is enabled
+- `rds_host`: RDS host endpoint (from secret)
+- `rds_port`: RDS port (from secret)
+- `rds_database`: RDS database name (from secret)
 
-### IAM Role (External)
-- Must be created externally with appropriate permissions
-- Should include basic Lambda execution permissions
-- Should include VPC access permissions (if VPC configured)
-- Follows least privilege principle
+## Requirements
 
-### Security Group (VPC)
-- Outbound access to all destinations
-- No inbound rules (Lambda doesn't accept direct connections)
-- Lifecycle management for updates
-
-## Notes
-- The Lambda function will only be created if `create = true`
-- Source code deployment should be handled separately via CI/CD or manual upload
-- Tags are automatically merged with environment, controlled_by, and client tags
-- VPC configuration is optional - leave empty for public Lambda deployment
-- IAM role must be created externally and passed via `role_arn` variable 
+- Terraform >= 1.0
+- AWS Provider >= 4.0
+- VPC configuration when using RDS connection
+- AWS Secrets Manager secret with RDS connection details 

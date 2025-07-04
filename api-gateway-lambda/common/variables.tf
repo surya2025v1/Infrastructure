@@ -37,6 +37,37 @@ variable "db_credentials_secret_name" {
   default     = "prod1db"
 }
 
+# RDS MySQL Connection Configuration
+variable "enable_rds_connection" {
+  description = "Flag to enable RDS MySQL connection configuration globally"
+  type        = bool
+  default     = false
+}
+
+variable "rds_secret_name" {
+  description = "Name of the AWS Secrets Manager secret containing RDS MySQL connection details"
+  type        = string
+  default     = ""
+}
+
+variable "rds_secret_region" {
+  description = "AWS region where the RDS secret is stored"
+  type        = string
+  default     = ""
+}
+
+variable "rds_connection_timeout" {
+  description = "Connection timeout for RDS MySQL in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "rds_max_connections" {
+  description = "Maximum number of database connections in the pool"
+  type        = number
+  default     = 10
+}
+
 # API Gateway Configuration
 variable "create_api_gateway" {
   description = "Whether to create the API Gateway"
@@ -70,6 +101,12 @@ variable "api_gateway_stage_name" {
   description = "Name of the API Gateway stage"
   type        = string
   default     = "prod"
+}
+
+variable "ignore_existing_stage" {
+  description = "When true, creates a new stage even if one exists (may cause conflicts). When false, skips stage creation if stage already exists."
+  type        = bool
+  default     = false
 }
 
 variable "api_gateway_authorization_type" {
@@ -229,13 +266,13 @@ variable "security_headers" {
   description = "Map of security headers to add to responses"
   type        = map(string)
   default = {
-    "X-Content-Type-Options" = "nosniff"
-    "X-Frame-Options"        = "DENY"
-    "X-XSS-Protection"       = "1; mode=block"
+    "X-Content-Type-Options"    = "nosniff"
+    "X-Frame-Options"           = "DENY"
+    "X-XSS-Protection"          = "1; mode=block"
     "Strict-Transport-Security" = "max-age=31536000; includeSubDomains"
-    "Referrer-Policy"        = "strict-origin-when-cross-origin"
-    "Content-Security-Policy" = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-    "Permissions-Policy"     = "geolocation=(), microphone=(), camera=()"
+    "Referrer-Policy"           = "strict-origin-when-cross-origin"
+    "Content-Security-Policy"   = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    "Permissions-Policy"        = "geolocation=(), microphone=(), camera=()"
   }
 }
 
@@ -243,20 +280,26 @@ variable "security_headers" {
 variable "lambda_functions" {
   description = "Map of Lambda functions to create"
   type = map(object({
-    function_name           = string
-    handler                 = string
-    runtime                 = string
-    memory_size             = number
-    timeout                 = number
-    environment_variables   = map(string)
-    vpc_subnet_ids          = list(string)
-    vpc_security_group_ids  = list(string)
-    role_arn                = string
-    s3_bucket               = string
-    s3_key                  = string
-    s3_object_version       = string
-    create                  = bool
-    delete                  = bool
+    function_name          = string
+    handler                = string
+    runtime                = string
+    memory_size            = number
+    timeout                = number
+    environment_variables  = map(string)
+    vpc_subnet_ids         = list(string)
+    vpc_security_group_ids = list(string)
+    role_arn               = string
+    s3_bucket              = string
+    s3_key                 = string
+    s3_object_version      = string
+    create                 = bool
+    delete                 = bool
+    # RDS Connection Configuration (optional)
+    enable_rds_connection  = optional(bool, false)
+    rds_secret_name        = optional(string, "")
+    rds_secret_region      = optional(string, "")
+    rds_connection_timeout = optional(number, 30)
+    rds_max_connections    = optional(number, 10)
   }))
   default = {}
 }
@@ -265,32 +308,32 @@ variable "lambda_functions" {
 variable "api_gateway_lambda_integrations" {
   description = "Map of Lambda integrations for API Gateway path-based routing"
   type = map(object({
-    path_part        = string
+    path_part            = string
     lambda_function_name = string
-    http_methods     = list(string)
-    enable_proxy     = bool
-    proxy_path_part  = string
-    require_api_key  = bool
-    rate_limit       = number
+    http_methods         = list(string)
+    enable_proxy         = bool
+    proxy_path_part      = string
+    require_api_key      = bool
+    rate_limit           = number
   }))
   default = {}
-  
+
   validation {
     condition = alltrue([
-      for integration in values(var.api_gateway_lambda_integrations) : 
+      for integration in values(var.api_gateway_lambda_integrations) :
       can(regex("^[a-zA-Z0-9_-]+$", integration.path_part))
     ])
     error_message = "Path parts must contain only alphanumeric characters, hyphens, and underscores."
   }
-  
+
   validation {
     condition = alltrue([
-      for integration in values(var.api_gateway_lambda_integrations) : 
+      for integration in values(var.api_gateway_lambda_integrations) :
       length(integration.http_methods) > 0
     ])
     error_message = "At least one HTTP method must be specified for each integration."
   }
-  
+
   validation {
     condition = alltrue([
       for method in flatten([for integration in values(var.api_gateway_lambda_integrations) : integration.http_methods]) :
@@ -298,7 +341,7 @@ variable "api_gateway_lambda_integrations" {
     ])
     error_message = "HTTP methods must be one of: GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD, ANY."
   }
-  
+
   validation {
     condition = alltrue([
       for method in flatten([for integration in values(var.api_gateway_lambda_integrations) : integration.http_methods]) :
@@ -306,4 +349,10 @@ variable "api_gateway_lambda_integrations" {
     ])
     error_message = "OPTIONS method should not be included in http_methods as it is automatically created for CORS support."
   }
+}
+
+variable "rds_instance_arn" {
+  description = "The ARN of the RDS instance to tag after Lambda creation"
+  type        = string
+  default     = ""
 } 

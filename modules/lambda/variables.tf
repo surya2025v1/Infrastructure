@@ -3,30 +3,6 @@ variable "function_name" {
   type        = string
 }
 
-variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
-
-variable "tags" {
-  description = "A map of tags to assign to the resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "controlled_by" {
-  description = "Tag indicating what controls this resource"
-  type        = string
-  default     = "Terraform"
-}
-
-variable "client" {
-  description = "Client name for the project"
-  type        = string
-  default     = "TBD"
-}
-
 variable "handler" {
   description = "Lambda function entrypoint handler (e.g., main.handler)"
   type        = string
@@ -57,18 +33,6 @@ variable "timeout" {
   default     = 30
 }
 
-variable "vpc_subnet_ids" {
-  description = "List of subnet IDs for Lambda VPC config (optional)"
-  type        = list(string)
-  default     = []
-}
-
-variable "vpc_security_group_ids" {
-  description = "List of additional security group IDs for Lambda VPC config (optional)"
-  type        = list(string)
-  default     = []
-}
-
 variable "role_arn" {
   description = "IAM role ARN for Lambda execution (created externally)"
   type        = string
@@ -92,6 +56,30 @@ variable "s3_object_version" {
   default     = ""
 }
 
+variable "tags" {
+  description = "A map of tags to assign to the resources"
+  type        = map(string)
+  default     = {}
+}
+
+variable "environment" {
+  description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+
+variable "controlled_by" {
+  description = "Tag indicating what controls this resource"
+  type        = string
+  default     = "Terraform"
+}
+
+variable "client" {
+  description = "Client name for the project"
+  type        = string
+  default     = "TBD"
+}
+
 variable "create" {
   description = "Flag to control Lambda function creation"
   type        = bool
@@ -102,4 +90,10 @@ variable "delete" {
   description = "Flag to control Lambda function deletion"
   type        = bool
   default     = false
+}
+
+variable "rds_secret_name" {
+  description = "The name of the AWS Secrets Manager secret containing RDS connection details"
+  type        = string
+  default     = ""
 } 

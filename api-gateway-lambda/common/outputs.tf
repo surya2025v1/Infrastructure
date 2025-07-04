@@ -1,15 +1,4 @@
 # Lambda Function Outputs
-output "lambda_functions" {
-  description = "Map of Lambda function outputs"
-  value = {
-    for k, v in module.lambda_functions : k => {
-      function_name = v.lambda_function_name
-      function_arn  = v.lambda_function_arn
-      invoke_arn    = v.lambda_invoke_arn
-      security_group_id = v.lambda_security_group_id
-    }
-  }
-}
 
 output "lambda_function_names" {
   description = "Map of Lambda function names"
@@ -56,6 +45,11 @@ output "api_gateway_base_url" {
 output "api_gateway_stage_name" {
   description = "Name of the API Gateway stage"
   value       = module.api_gateway.api_gateway_stage_name
+}
+
+output "api_gateway_stage_exists" {
+  description = "Whether the API Gateway stage already existed"
+  value       = module.api_gateway.api_gateway_stage_exists
 }
 
 output "api_gateway_deployment_id" {
@@ -153,15 +147,15 @@ output "api_endpoints" {
   description = "Map of API endpoints for each Lambda integration"
   value = {
     for k, v in module.api_gateway.lambda_integration_endpoints : k => {
-      path_part = v.path_part
-      endpoint  = v.endpoint
-      proxy_endpoint = v.proxy_endpoint
+      path_part            = v.path_part
+      endpoint             = v.endpoint
+      proxy_endpoint       = v.proxy_endpoint
       lambda_function_name = v.lambda_function_name
-      http_methods = v.http_methods
-      require_api_key = v.require_api_key
-      rate_limit = v.rate_limit
-      documentation_url = "${v.endpoint}/docs"
-      redoc_url = "${v.endpoint}/redoc"
+      http_methods         = v.http_methods
+      require_api_key      = v.require_api_key
+      rate_limit           = v.rate_limit
+      documentation_url    = "${v.endpoint}/docs"
+      redoc_url            = "${v.endpoint}/redoc"
     }
   }
 }
@@ -171,7 +165,7 @@ output "api_documentation_urls" {
   value = {
     for k, v in module.api_gateway.lambda_integration_endpoints : k => {
       swagger_ui = "${v.endpoint}/docs"
-      redoc = "${v.endpoint}/redoc"
+      redoc      = "${v.endpoint}/redoc"
     }
   }
 }
@@ -180,14 +174,14 @@ output "api_documentation_urls" {
 output "security_summary" {
   description = "Summary of security configurations"
   value = {
-    waf_enabled = var.enable_waf
-    usage_plans_enabled = var.enable_usage_plans
-    monitoring_enabled = var.enable_monitoring
-    cors_origins_count = length(var.cors_origins)
-    rate_limit = var.rate_limit
-    burst_limit = var.burst_limit
-    quota_limit = var.quota_limit
-    api_keys_count = length(var.api_keys)
+    waf_enabled            = var.enable_waf
+    usage_plans_enabled    = var.enable_usage_plans
+    monitoring_enabled     = var.enable_monitoring
+    cors_origins_count     = length(var.cors_origins)
+    rate_limit             = var.rate_limit
+    burst_limit            = var.burst_limit
+    quota_limit            = var.quota_limit
+    api_keys_count         = length(var.api_keys)
     security_headers_count = length(var.security_headers)
   }
 }
@@ -196,16 +190,16 @@ output "security_summary" {
 output "deployment_info" {
   description = "Deployment information and next steps"
   value = {
-    api_url = module.api_gateway.api_gateway_base_url
-    stage_name = module.api_gateway.api_gateway_stage_name
-    waf_status = var.enable_waf ? "Enabled" : "Disabled"
-    api_keys_status = var.enable_usage_plans ? "Enabled" : "Disabled"
+    api_url           = module.api_gateway.api_gateway_base_url
+    stage_name        = module.api_gateway.api_gateway_stage_name
+    waf_status        = var.enable_waf ? "Enabled" : "Disabled"
+    api_keys_status   = var.enable_usage_plans ? "Enabled" : "Disabled"
     monitoring_status = var.enable_monitoring ? "Enabled" : "Disabled"
-    cors_origins = var.cors_origins
+    cors_origins      = var.cors_origins
     rate_limiting = {
-      rate_limit = var.rate_limit
-      burst_limit = var.burst_limit
-      quota_limit = var.quota_limit
+      rate_limit   = var.rate_limit
+      burst_limit  = var.burst_limit
+      quota_limit  = var.quota_limit
       quota_period = var.quota_period
     }
     next_steps = [
@@ -216,4 +210,4 @@ output "deployment_info" {
       "Review security headers in responses"
     ]
   }
-} 
+}
