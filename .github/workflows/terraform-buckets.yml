@@ -76,4 +76,46 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
           echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV
+website-2-stage:
+    needs: setup
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'buckets/svtemple/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'buckets/svtemple/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'buckets/svtemple/terraform.tfvars')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Init, Plan, Apply/Destroy
+        working-directory: buckets/svtemple
+        env:
+          AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ needs.setup.outputs.aws_session_token }}
+          AWS_DEFAULT_REGION: us-east-2
+        run: |
+          set -e
+          terraform init
+          terraform plan -out=tfplan
+
+          CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+
+          if [ "$CREATE" = "true" ]; then
+            echo "Running terraform apply..."
+            terraform apply -auto-approve tfplan
+          fi
+
+          if [ "$DELETE" = "true" ]; then
+            echo "Running terraform destroy..."
+            terraform destroy -auto-approve
+          fi
+      - name: Cleanup AWS credentials
+        if: always()
+        run: |
+          echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV
  
