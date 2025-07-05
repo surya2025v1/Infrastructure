@@ -76,7 +76,7 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
           echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV
-website-2-stage:
+  website-2-stage:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
