@@ -90,3 +90,60 @@ jobs:
           echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
           echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV 
+
+  s3-svtemple-stage:
+    needs: setup
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 's3/svtemple/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 's3/svtemple/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 's3/svtemple/terraform.tfvars')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Init, Plan, Apply/Destroy
+        working-directory: s3/svtemple
+        env:
+          AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ needs.setup.outputs.aws_session_token }}
+          AWS_DEFAULT_REGION: us-east-2
+        run: |
+          set -e
+          terraform init
+          terraform plan -out=tfplan
+
+          CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+
+          echo "Create flag: $CREATE"
+          echo "Delete flag: $DELETE"
+
+          if [ "$CREATE" = "true" ]; then
+            echo "Running terraform apply..."
+            terraform apply -auto-approve tfplan
+            echo "✅ S3 bucket created/updated successfully"
+            
+            # Output bucket information
+            echo "📦 Bucket Name: $(terraform output -raw bucket_name)"
+            echo "🔗 Bucket ARN: $(terraform output -raw bucket_arn)"
+            echo "🌍 Bucket Region: $(terraform output -raw bucket_region)"
+          fi
+
+          if [ "$DELETE" = "true" ]; then
+            echo "Running terraform destroy..."
+            terraform destroy -auto-approve
+            echo "🗑️ S3 bucket destroyed successfully"
+          fi
+
+          if [ "$CREATE" != "true" ] && [ "$DELETE" != "true" ]; then
+            echo "ℹ️ No action required. Both create and delete flags are false."
+          fi
+      - name: Cleanup AWS credentials
+        if: always()
+        run: |
+          echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV 
