@@ -355,7 +355,7 @@ resource "aws_api_gateway_stage" "this" {
 
 # Method Settings for API Gateway Stage
 resource "aws_api_gateway_method_settings" "main" {
-  count = var.create ? 1 : 0
+  count = var.create && local.should_create_stage ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.this[0].id
   stage_name  = var.stage_name
@@ -366,6 +366,9 @@ resource "aws_api_gateway_method_settings" "main" {
     logging_level   = var.enable_monitoring ? "INFO" : "OFF"
     data_trace_enabled = false
   }
+
+  # Ensure stage exists before applying method settings
+  depends_on = [aws_api_gateway_deployment.this]
 }
 
 # CloudWatch Log Group for API Gateway
@@ -525,7 +528,7 @@ resource "aws_wafv2_web_acl" "api_gateway" {
 
 # Associate WAF with API Gateway Stage
 resource "aws_wafv2_web_acl_association" "api_gateway" {
-  count = var.create && var.enable_waf ? 1 : 0
+  count = var.create && var.enable_waf && local.should_create_stage ? 1 : 0
   
   resource_arn = aws_api_gateway_stage.this[0].arn
   web_acl_arn  = aws_wafv2_web_acl.api_gateway[0].arn
@@ -533,7 +536,7 @@ resource "aws_wafv2_web_acl_association" "api_gateway" {
 
 # API Gateway Usage Plan
 resource "aws_api_gateway_usage_plan" "main" {
-  count = var.create && var.enable_usage_plans ? 1 : 0
+  count = var.create && var.enable_usage_plans && local.should_create_stage ? 1 : 0
   
   name         = "${var.api_name}-usage-plan"
   description  = "Usage plan for ${var.api_name}"
@@ -587,7 +590,7 @@ resource "aws_api_gateway_usage_plan_key" "keys" {
 
 # CloudWatch Alarms for monitoring
 resource "aws_cloudwatch_metric_alarm" "api_errors" {
-  count = var.create && var.enable_monitoring ? 1 : 0
+  count = var.create && var.enable_monitoring && local.should_create_stage ? 1 : 0
   
   alarm_name          = "${var.api_name}-5xx-errors"
   comparison_operator = "GreaterThanThreshold"
@@ -613,7 +616,7 @@ resource "aws_cloudwatch_metric_alarm" "api_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_latency" {
-  count = var.create && var.enable_monitoring ? 1 : 0
+  count = var.create && var.enable_monitoring && local.should_create_stage ? 1 : 0
   
   alarm_name          = "${var.api_name}-high-latency"
   comparison_operator = "GreaterThanThreshold"
@@ -639,7 +642,7 @@ resource "aws_cloudwatch_metric_alarm" "api_latency" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "api_requests" {
-  count = var.create && var.enable_monitoring ? 1 : 0
+  count = var.create && var.enable_monitoring && local.should_create_stage ? 1 : 0
   
   alarm_name          = "${var.api_name}-high-requests"
   comparison_operator = "GreaterThanThreshold"
