@@ -174,9 +174,18 @@ lambda_functions = {
 # API Gateway Lambda Integrations (Path-based routing)
 api_gateway_lambda_integrations = {
   # API proxy to handle /api/v1/* paths (and all sub-paths)
-  api_proxy = {
-    path_part            = "api"
-    lambda_function_name = "np-managment-main-api"
+  auth_proxy = {
+    path_part            = "api/v1/auth"
+    lambda_function_name = "np-managment-auth-svtemple-api"
+    http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    enable_proxy         = true
+    proxy_path_part      = "{proxy+}"
+    require_api_key      = false
+    rate_limit           = 100
+  }
+  context_proxy = {
+    path_part            = "api/v1/context"
+    lambda_function_name = "np-managment-context-svtemple-api"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
     proxy_path_part      = "{proxy+}"
