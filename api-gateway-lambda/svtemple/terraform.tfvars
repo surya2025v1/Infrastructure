@@ -175,7 +175,7 @@ lambda_functions = {
 api_gateway_lambda_integrations = {
   # API proxy to handle /api/v1/* paths (and all sub-paths)
   auth_proxy = {
-    path_part            = "api/v1/auth"
+    path_part            = "auth"
     lambda_function_name = "np-managment-auth-svtemple-api"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
@@ -184,7 +184,7 @@ api_gateway_lambda_integrations = {
     rate_limit           = 100
   }
   context_proxy = {
-    path_part            = "api/v1/context"
+    path_part            = "context"
     lambda_function_name = "np-managment-context-svtemple-api"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
