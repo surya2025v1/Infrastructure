@@ -112,7 +112,7 @@ security_headers = {
 lambda_functions = {
   # Authentication Service
   auth_service = {
-    function_name = "np-managment-main-api"
+    function_name = "np-managment-auth-svtemple-api"
     handler       = "main.handler"
     runtime       = "python3.11"
     memory_size   = 512
@@ -120,7 +120,7 @@ lambda_functions = {
     environment_variables = {
       ENVIRONMENT = "prod"
       LOG_LEVEL   = "INFO"
-      SERVICE     = "np-management-api"
+      SERVICE     = "np-managment-auth-svtemple-api"
       # Security environment variables
       ALLOWED_ORIGINS     = "http://localhost:5173"
       API_KEY_REQUIRED    = "false"
@@ -134,7 +134,36 @@ lambda_functions = {
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
     s3_bucket              = "python-api-storage-svtemple"
-    s3_key                 = "auth/python-fastapi-login.zip"
+    s3_key                 = "auth/python-fastapi-auth.zip"
+    s3_object_version      = ""
+    create                 = true
+    delete                 = false
+
+  }
+    context_service = {
+    function_name = "np-managment-context-svtemple-api"
+    handler       = "main.handler"
+    runtime       = "python3.11"
+    memory_size   = 512
+    timeout       = 30
+    environment_variables = {
+      ENVIRONMENT = "prod"
+      LOG_LEVEL   = "INFO"
+      SERVICE     = "np-managment-context-svtemple-api"
+      # Security environment variables
+      ALLOWED_ORIGINS     = "http://localhost:5173"
+      API_KEY_REQUIRED    = "false"
+      RATE_LIMIT_ENABLED  = "true"
+      RATE_LIMIT_REQUESTS = "100"
+      # Database configuration
+      DB_SECRET_NAME   = "prod1db"
+      DB_SECRET_REGION = "us-east-2"
+    }
+    vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
+    vpc_security_group_ids = []
+    role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
+    s3_bucket              = "python-api-storage-svtemple"
+    s3_key                 = "context/python-fastapi-context.zip"
     s3_object_version      = ""
     create                 = true
     delete                 = false
