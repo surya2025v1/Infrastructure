@@ -26,7 +26,7 @@ api_gateway_name          = "temple-project-api-main"
 api_gateway_description   = "API Gateway for Temple Project with multiple Lambda functions"
 api_gateway_endpoint_type = "REGIONAL"
 api_gateway_stage_name    = "v0703251235"
-ignore_existing_stage     = false
+ignore_existing_stage     = true
 
 # API Gateway Authorization
 api_gateway_authorization_type = "NONE"
