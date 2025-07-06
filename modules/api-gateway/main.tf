@@ -366,9 +366,6 @@ resource "aws_api_gateway_method_settings" "main" {
     logging_level   = var.enable_monitoring ? "INFO" : "OFF"
     data_trace_enabled = false
   }
-
-  # Only depend on stage if it's being created
-  depends_on = local.should_create_stage ? [aws_api_gateway_stage.this[0]] : []
 }
 
 # CloudWatch Log Group for API Gateway
