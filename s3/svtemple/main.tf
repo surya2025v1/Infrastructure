@@ -15,7 +15,7 @@ terraform {
 terraform {
   backend "s3" {
     bucket         = "my-terraform-state-bucket-20250701"
-    key            = "global/s3/svtemple/terraform.tfstate"
+    key            = "global/s3/svtemple-api/terraform.tfstate"
     region         = "us-east-2"
     dynamodb_table = "TerraformStateLock"
     encrypt        = true
