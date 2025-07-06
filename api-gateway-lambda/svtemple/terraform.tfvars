@@ -25,7 +25,7 @@ create_api_gateway = true
 api_gateway_name          = "temple-project-api-svtemple-main"
 api_gateway_description   = "API Gateway for Temple Project with multiple Lambda functions"
 api_gateway_endpoint_type = "REGIONAL"
-api_gateway_stage_name    = "v0703251235"
+api_gateway_stage_name    = "svtemple-prod"
 ignore_existing_stage     = true
 
 # API Gateway Authorization
