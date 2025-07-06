@@ -4,7 +4,7 @@ aws_region = "us-east-2"
 # Environment Configuration
 environment   = "prod"
 controlled_by = "terraform"
-client        = "temple-project"
+client        = "temple-project-svtemple"
 
 # Tags
 tags = {
@@ -22,7 +22,7 @@ rds_secret_name            = "prod1db"
 # API Gateway Configuration
 create_api_gateway = true
 
-api_gateway_name          = "temple-project-api-main"
+api_gateway_name          = "temple-project-api-svtemple-main"
 api_gateway_description   = "API Gateway for Temple Project with multiple Lambda functions"
 api_gateway_endpoint_type = "REGIONAL"
 api_gateway_stage_name    = "v0703251235"
@@ -43,7 +43,7 @@ enable_monitoring  = false
 
 # CORS Configuration
 cors_origins = [
-  "http://svtemple.org1.s3-website.us-east-2.amazonaws.com"
+  "http://svtemple-test.s3-website.us-east-2.amazonaws.com"
 ]
 
 cors_allow_credentials = true
@@ -133,8 +133,8 @@ lambda_functions = {
     vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
-    s3_bucket              = "python-api-storage-common"
-    s3_key                 = "login/lambda/python-fastapi-login.zip"
+    s3_bucket              = "python-api-storage-svtemple"
+    s3_key                 = "auth/python-fastapi-login.zip"
     s3_object_version      = ""
     create                 = true
     delete                 = false
