@@ -3,7 +3,7 @@ data "aws_region" "current" {}
 
 # Local values to handle existing stages
 locals {
-  # Since we can't check if stage exists via data source, we'll use a variable to control behavior
+  # Create stage only if explicitly requested and we're ignoring existing stages
   should_create_stage = var.create && var.ignore_existing_stage
 }
 
@@ -307,7 +307,6 @@ resource "aws_api_gateway_deployment" "this" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.this[0].id
-  stage_name  = var.stage_name
 
   lifecycle {
     create_before_destroy = true
@@ -368,7 +367,8 @@ resource "aws_api_gateway_method_settings" "main" {
     data_trace_enabled = false
   }
 
-  depends_on = [aws_api_gateway_stage.this]
+  # Only depend on stage if it's being created
+  depends_on = local.should_create_stage ? [aws_api_gateway_stage.this[0]] : []
 }
 
 # CloudWatch Log Group for API Gateway

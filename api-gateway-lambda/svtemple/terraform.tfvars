@@ -172,8 +172,10 @@ lambda_functions = {
 }
 
 # API Gateway Lambda Integrations (Path-based routing)
+# The path_part value determines the actual API Gateway resource path that gets created
+# For example: path_part = "auth" creates /auth endpoints, path_part = "api/v1" would create /api/v1 endpoints
 api_gateway_lambda_integrations = {
-  # API proxy to handle /api/v1/* paths (and all sub-paths)
+  # Authentication service - creates /auth/* endpoints
   auth_proxy = {
     path_part            = "auth"
     lambda_function_name = "np-managment-auth-svtemple-api"
@@ -183,6 +185,7 @@ api_gateway_lambda_integrations = {
     require_api_key      = false
     rate_limit           = 100
   }
+  # Context service - creates /context/* endpoints
   context_proxy = {
     path_part            = "context"
     lambda_function_name = "np-managment-context-svtemple-api"
