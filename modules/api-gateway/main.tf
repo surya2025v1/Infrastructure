@@ -214,6 +214,7 @@ resource "aws_api_gateway_method_response" "lambda_options_method_responses" {
     "method.response.header.Access-Control-Allow-Origin"  = true
     "method.response.header.Access-Control-Allow-Credentials" = true
     "method.response.header.Access-Control-Max-Age" = true
+    "method.response.header.Access-Control-Expose-Headers" = true
   }
 }
 
@@ -235,6 +236,7 @@ resource "aws_api_gateway_method_response" "lambda_proxy_options_method_response
     "method.response.header.Access-Control-Allow-Origin"  = true
     "method.response.header.Access-Control-Allow-Credentials" = true
     "method.response.header.Access-Control-Max-Age" = true
+    "method.response.header.Access-Control-Expose-Headers" = true
   }
 }
 
@@ -253,6 +255,7 @@ resource "aws_api_gateway_integration_response" "lambda_options_integration_resp
     "method.response.header.Access-Control-Allow-Origin"  = "'${join(",", var.cors_origins)}'"
     "method.response.header.Access-Control-Allow-Credentials" = "'${var.cors_allow_credentials}'"
     "method.response.header.Access-Control-Max-Age" = "'${var.cors_max_age}'"
+    "method.response.header.Access-Control-Expose-Headers" = "'${join(",", var.cors_expose_headers)}'"
   }
 }
 
@@ -274,6 +277,7 @@ resource "aws_api_gateway_integration_response" "lambda_proxy_options_integratio
     "method.response.header.Access-Control-Allow-Origin"  = "'${join(",", var.cors_origins)}'"
     "method.response.header.Access-Control-Allow-Credentials" = "'${var.cors_allow_credentials}'"
     "method.response.header.Access-Control-Max-Age" = "'${var.cors_max_age}'"
+    "method.response.header.Access-Control-Expose-Headers" = "'${join(",", var.cors_expose_headers)}'"
   }
 }
 
