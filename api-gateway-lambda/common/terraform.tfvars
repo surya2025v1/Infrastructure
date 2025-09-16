@@ -209,7 +209,7 @@ api_gateway_lambda_integrations = {
     lambda_function_name = "np-managment-main-api"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
-    proxy_path_part      = "api/v2/{proxy+}"
+    proxy_path_part      = "{proxy+}"
     require_api_key      = false
     rate_limit           = 100
   }
@@ -220,7 +220,7 @@ api_gateway_lambda_integrations = {
     lambda_function_name = "temple-user-api-v2"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
-    proxy_path_part      = "/user/v2/{proxy+}"
+    proxy_path_part      = "{proxy+}"
     require_api_key      = false
     rate_limit           = 100
   }
@@ -231,7 +231,7 @@ api_gateway_lambda_integrations = {
     lambda_function_name = "temple-admin-api-v2"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
-    proxy_path_part      = "/admin/v2{proxy+}"
+    proxy_path_part      = "{proxy+}"
     require_api_key      = false
     rate_limit           = 200
   }
