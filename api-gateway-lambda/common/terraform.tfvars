@@ -182,7 +182,7 @@ lambda_functions = {
       LOG_LEVEL   = "INFO"
       SERVICE     = "admin-api-v2"
       # Security environment variables
-      ALLOWED_ORIGINS     = "http://svtemple.org1.s3-website.us-east-2.amazonaws.com"
+      ALLOWED_ORIGINS     = "https://jehsmecs7e.execute-api.us-east-2.amazonaws.com"
       API_KEY_REQUIRED    = "false"
       RATE_LIMIT_ENABLED  = "true"
       RATE_LIMIT_REQUESTS = "200"
