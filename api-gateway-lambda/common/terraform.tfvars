@@ -43,7 +43,7 @@ enable_monitoring  = false
 
 # CORS Configuration
 cors_origins = [
-  "http://svtemple.org1.s3-website.us-east-2.amazonaws.com"
+  "https://jehsmecs7e.execute-api.us-east-2.amazonaws.com"
 ]
 
 cors_allow_credentials = true
@@ -152,7 +152,7 @@ lambda_functions = {
       LOG_LEVEL   = "INFO"
       SERVICE     = "user-api-v2"
       # Security environment variables
-      ALLOWED_ORIGINS     = "http://svtemple.org1.s3-website.us-east-2.amazonaws.com"
+      ALLOWED_ORIGINS     = "https://jehsmecs7e.execute-api.us-east-2.amazonaws.com"
       API_KEY_REQUIRED    = "false"
       RATE_LIMIT_ENABLED  = "true"
       RATE_LIMIT_REQUESTS = "100"
@@ -227,7 +227,7 @@ api_gateway_lambda_integrations = {
 
   # Admin API Integration - handles /admin/* paths
   admin_api_proxy = {
-    path_part            = "admin"
+    path_part            = "admin/v2"
     lambda_function_name = "temple-admin-api-v2"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
