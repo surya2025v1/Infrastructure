@@ -1,64 +1,23 @@
-# Variables for Private ECR Repository
+# Terraform Variables Configuration
+# Private ECR Repository Configuration for Temple Management System
 
-variable "repository_name" {
-  description = "ECR repository name for Lambda function"
-  type        = string
+repository_name = "user-api-v2"
+service_name    = "Temple User API"
+environment     = "prod"
+
+common_tags = {
+  Project     = "Temple Management"
+  ManagedBy   = "Terraform"
+  Owner       = "DevOps Team"
+  CostCenter  = "Engineering"
+  Environment = "prod"
+  Purpose     = "Lambda Function Deployment"
 }
 
-variable "service_name" {
-  description = "Service name for description and tagging"
-  type        = string
-}
+scan_on_push = true
+image_tag_mutability = "MUTABLE"
+encryption_type = "AES256"
 
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
-  type        = string
-  default     = "prod"
-}
-
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
-  default     = {
-    Project     = "Temple Management"
-    ManagedBy   = "Terraform"
-    Owner       = "DevOps Team"
-    CostCenter  = "Engineering"
-  }
-}
-
-variable "scan_on_push" {
-  description = "Enable image scanning on push"
-  type        = bool
-  default     = true
-}
-
-variable "image_tag_mutability" {
-  description = "Image tag mutability setting"
-  type        = string
-  default     = "MUTABLE"
-}
-
-variable "encryption_type" {
-  description = "Encryption type for repository"
-  type        = string
-  default     = "AES256"
-}
-
-variable "max_images" {
-  description = "Maximum number of images to retain"
-  type        = number
-  default     = 10
-}
-
-variable "untagged_image_retention_days" {
-  description = "Days to retain untagged images"
-  type        = number
-  default     = 1
-}
-
-variable "lifecycle_policy_priority_tag_prefix" {
-  description = "Priority tag prefix for lifecycle policy"
-  type        = string
-  default     = "v"
-}
+max_images = 10
+untagged_image_retention_days = 1
+lifecycle_policy_priority_tag_prefix = "v"
