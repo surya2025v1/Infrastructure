@@ -130,7 +130,7 @@ lambda_functions = {
       DB_SECRET_NAME   = "prod1db"
       DB_SECRET_REGION = "us-east-2"
     }
-    vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
+    vpc_subnet_ids         = ["subnet-03e2dd36ad8b2ddb2", "subnet-00123569c810e9f51", "subnet-0afe7507c9094de0c"]
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
     s3_bucket              = "python-api-storage-common"
@@ -165,7 +165,7 @@ lambda_functions = {
       PORT = "8000"
       HOST = "0.0.0.0"
     }
-    vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
+    vpc_subnet_ids         = ["subnet-03e2dd36ad8b2ddb2", "subnet-00123569c810e9f51", "subnet-0afe7507c9094de0c"]
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
     s3_bucket              = "python-api-storage-common"  # Keep for backward compatibility
@@ -195,7 +195,7 @@ lambda_functions = {
       DB_SECRET_NAME   = "prod1db"
       DB_SECRET_REGION = "us-east-2"
     }
-    vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
+    vpc_subnet_ids         = ["subnet-03e2dd36ad8b2ddb2", "subnet-00123569c810e9f51", "subnet-0afe7507c9094de0c"]
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
     s3_bucket              = "python-api-storage-common"
@@ -232,7 +232,7 @@ api_gateway_lambda_integrations = {
 
   # Admin API Integration - handles /admin/* paths
   admin_api_proxy = {
-    path_part            = "admin/v2"
+    path_part            = "admin"
     lambda_function_name = "temple-admin-api-v2"
     http_methods         = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     enable_proxy         = true
