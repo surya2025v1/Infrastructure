@@ -46,6 +46,13 @@ resource "aws_s3_bucket_acl" "website_bucket" {
 
 # S3 Bucket Policy for public read access
 resource "aws_s3_bucket_policy" "website_bucket" {
+    depends_on = [
+    aws_s3_bucket_public_access_block.website_bucket,
+    aws_s3_bucket_ownership_controls.website_bucket,
+    aws_s3_bucket_acl.website_bucket,
+  ]
+
+  
   bucket = aws_s3_bucket.website_bucket.id
 
   policy = jsonencode({
