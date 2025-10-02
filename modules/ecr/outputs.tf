@@ -1,78 +1,114 @@
-# Outputs for ECR Repository Module
+# Variables for ECR Repository Module
 
-output "registry_id" {
-  description = "Registry ID"
-  value       = local.registry_id
+variable "ecr_registry" {
+  description = "Private ECR registry URL (e.g., '123456789012.dkr.ecr.us-east-1.amazonaws.com')"
+  type        = string
 }
 
-output "repository_name" {
-  description = "Repository name"
-  value       = local.repo_name
+variable "ecr_repository" {
+  description = "ECR repository name for Lambda function"
+  type        = string
+  default     = ""
 }
 
-output "aws_account_id" {
-  description = "AWS account ID"
-  value       = local.aws_account
-}
-
-output "aws_region" {
-  description = "AWS region"
-  value       = local.aws_region
-}
-
-# ECR Repository Outputs
-output "repository_arn" {
-  description = "ARN of the ECR repository"
-  value       = aws_ecr_repository.private_repo.arn
-}
-
-output "repository_url" {
-  description = "URL of the ECR repository"
-  value       = aws_ecr_repository.private_repo.repository_url
-}
-
-# Docker login command
-output "docker_login_command" {
-  description = "Docker login command for the registry"
-  value       = "aws ecr get-login-password --region ${local.aws_region} | docker login --username AWS --password-stdin ${local.registry_id}"
-}
-
-# Tags for reference
-output "tags" {
-  description = "Tags applied to the ECR repository"
-  value       = aws_ecr_repository.private_repo.tags_all
-}
-
-# Lifecycle policy information
-output "lifecycle_policy_applied" {
-  description = "Whether a lifecycle policy was applied"
-  value       = local.final_lifecycle_policy != null
-}
-
-output "max_images_configured" {
-  description = "Maximum number of images configured for retention"
-  value       = var.max_images
-}
-
-output "untagged_retention_days" {
-  description = "Number of days for untagged image retention"
-  value       = var.untagged_image_retention_days
-}
-
-output "lifecycle_policy_json" {
-  description = "JSON of the applied lifecycle policy"
-  value       = local.final_lifecycle_policy
-}
-
-# Image cleanup summary
-output "image_retention_summary" {
-  description = "Summary of image retention configuration"
-  value = {
-    max_images                    = var.max_images
-    untagged_retention_days       = var.untagged_image_retention_days
-    priority_tag_prefix          = var.lifecycle_policy_priority_tag_prefix
-    automatic_policy_enabled     = var.enable_automatic_lifecycle_policy
-    custom_policy_used          = var.lifecycle_policy != null
-    cleanup_rules_count         = var.enable_automatic_lifecycle_policy ? 3 : 0
+variable "image_tag_mutability" {
+  description = "Image tag mutability setting for private ECR"
+  type        = string
+  default     = "MUTABLE"
+  validation {
+    condition     = contains(["MUTABLE", "IMMUTABLE"], var.image_tag_mutability)
+    error_message = "Image tag mutability must be either MUTABLE or IMMUTABLE."
   }
+}
+
+variable "scan_on_push" {
+  description = "Enable image scanning on push for private ECR"
+  type        = bool
+  default     = true
+}
+
+variable "encryption_type" {
+  description = "Encryption type for private ECR repository"
+  type        = string
+  default     = "AES256"
+  validation {
+    condition     = contains(["AES256", "KMS"], var.encryption_type)
+    error_message = "Encryption type must be either AES256 or KMS."
+  }
+}
+
+variable "force_delete" {
+  description = "Whether to force delete repository if images exist"
+  type        = bool
+  default     = false
+}
+
+variable "description" {
+  description = "Description for the ECR repository"
+  type        = string
+  default     = ""
+}
+
+variable "lifecycle_policy" {
+  description = "Lifecycle policy JSON for private ECR repository"
+  type        = string
+  default     = null
+}
+
+variable "max_images" {
+  description = "Maximum number of tagged Docker images to retain in the repository (for Lambda deployments). When exceeded, oldest images will be deleted automatically."
+  type        = number
+  default     = 10
+  validation {
+    condition     = var.max_images > 0 && var.max_images <= 100
+    error_message = "Maximum images must be between 1 and 100."
+  }
+}
+
+variable "untagged_image_retention_days" {
+  description = "Number of days to retain untagged Docker images (intermediate build layers) before deletion. Set to 0 to delete immediately."
+  type        = number
+  default     = 1
+  validation {
+    condition     = var.untagged_image_retention_days >= 0 && var.untagged_image_retention_days <= 365
+    error_message = "Untagged image retention days must be between 0 and 365."
+  }
+}
+
+variable "enable_automatic_lifecycle_policy" {
+  description = "Enable automatic lifecycle policy creation to manage Docker image retention"
+  type        = bool
+  default     = true
+}
+
+variable "repository_policy" {
+  description = "Repository policy JSON (works for both private and public ECR)"
+  type        = string
+  default     = null
+}
+
+variable "tags" {
+  description = "Additional tags to apply to the ECR repository"
+  type        = map(string)
+  default     = {}
+}
+
+# Optional: KMS key for encryption (for private ECR with KMS encryption)
+variable "kms_key_id" {
+  description = "KMS key ID for encryption (for private ECR with KMS encryption type)"
+  type        = string
+  default     = null
+}
+
+# Optional: Environment-specific configurations
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = ""
+}
+
+variable "project_name" {
+  description = "Project name for tagging"
+  type        = string
+  default     = ""
 }
