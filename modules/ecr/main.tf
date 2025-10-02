@@ -32,11 +32,12 @@ resource "aws_ecr_lifecycle_policy" "repo_policy" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 tagged images"
+        description  = "Delete untagged images after 1 day"
         selection = {
-          tagStatus     = "any"
-          countType     = "imageCountMoreThan"
-          countNumber   = 10
+          tagStatus     = "untagged"
+          countType     = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = 1
         }
         action = {
           type = "expire"
@@ -44,12 +45,11 @@ resource "aws_ecr_lifecycle_policy" "repo_policy" {
       },
       {
         rulePriority = 2
-        description  = "Delete untagged images after 1 day"
+        description  = "Keep last 10 images"
         selection = {
-          tagStatus     = "untagged"
-          countType     = "sinceImagePushed"
-          countUnit     = "days"
-          countNumber   = 1
+          tagStatus     = "any"
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
         }
         action = {
           type = "expire"
