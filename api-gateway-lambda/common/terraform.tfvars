@@ -143,10 +143,12 @@ lambda_functions = {
   # User Service Lambda
   user_service = {
     function_name = "temple-user-api-v2"
-    handler       = "main.handler"
-    runtime       = "python3.11"
+    handler       = "main.handler"  # Still needed for lambda config
+    runtime       = "python3.11"   # Still needed for lambda config
     memory_size   = 512
     timeout       = 30
+    use_ecr_image = true  # Enable ECR image usage
+    ecr_image_uri = "103056765659.dkr.ecr.us-east-2.amazonaws.com/user-api-v1:latest"
     environment_variables = {
       ENVIRONMENT = "prod"
       LOG_LEVEL   = "INFO"
@@ -159,15 +161,18 @@ lambda_functions = {
       # Database configuration
       DB_SECRET_NAME   = "prod1db"
       DB_SECRET_REGION = "us-east-2"
+      # Container configuration
+      PORT = "8000"
+      HOST = "0.0.0.0"
     }
     vpc_subnet_ids         = ["subnet-0e88b9a5f58af3830", "subnet-09cdb8fbc526cbba3", "subnet-0a68f373e52879c1d"]
     vpc_security_group_ids = []
     role_arn               = "arn:aws:iam::103056765659:role/aws-lambda-common-role"
-    s3_bucket              = "python-api-storage-common"
-    s3_key                 = "users/lambda/python-fastapi-user-api.zip"
-    s3_object_version      = ""
-    create                 = true
-    delete                 = false
+    s3_bucket              = "python-api-storage-common"  # Keep for backward compatibility
+    s3_key                  = "users/lambda/python-fastapi-user-api.zip"  # Keep for backward compatibility
+    s3_object_version       = ""
+    create                  = true
+    delete                  = false
   }
 
   # Admin Service Lambda
