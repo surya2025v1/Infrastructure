@@ -242,9 +242,49 @@ The Lambda execution role must have the following permissions for RDS connection
 - `rds_port`: RDS port (from secret)
 - `rds_database`: RDS database name (from secret)
 
+## Variables
+
+### Required Variables
+
+- `function_name` - Name of the Lambda function
+- `role_arn` - IAM role ARN for Lambda execution
+
+### Optional Variables
+
+#### Package Configuration
+- `use_ecr_image` - Enable ECR container images (default: false)
+- `ecr_image_uri` - Full ECR image URI (required when use_ecr_image = true)
+- `lambda_package_type` - Package type: "Zip" or "Image" (default: "Zip")
+
+#### Traditional Package Configuration (when use_ecr_image = false)
+- `handler` - Lambda function entrypoint (default: "main.handler")
+- `runtime` - Lambda runtime version (default: "python3.11")
+- `s3_bucket` - S3 bucket for deployment package (optional)
+- `s3_key` - S3 key/path to deployment package (optional)
+- `s3_object_version` - S3 object version (optional)
+
+#### Function Configuration
+- `memory_size` - Memory size in MB (default: 512)
+- `timeout` - Timeout in seconds (default: 30)
+- `environment_variables` - Map of environment variables
+
+#### RDS Configuration
+- `rds_secret_name` - AWS Secrets Manager secret name for RDS connection
+
+#### Tags and Metadata
+- `tags` - Map of tags for resources
+- `environment` - Environment name (default: "dev")
+- `controlled_by` - Control tagging (default: "Terraform")
+- `client` - Client name (default: "TBD")
+
+#### Control Flags
+- `create` - Enable resource creation (default: true)
+- `delete` - Enable resource deletion (default: false)
+
 ## Requirements
 
 - Terraform >= 1.0
 - AWS Provider >= 4.0
 - VPC configuration when using RDS connection
-- AWS Secrets Manager secret with RDS connection details 
+- AWS Secrets Manager secret with RDS connection details
+- For ECR images: Container image must include Lambda runtime interface client 
