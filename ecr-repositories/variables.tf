@@ -1,50 +1,37 @@
-# Variables for ECR Repository Examples
+# Variables for Public ECR Repository Reference
 
-variable "ecr_registry_url" {
-  description = "Full ECR registry URL (e.g., 'public.ecr.aws/x7o9n0b1' or '123456789012.dkr.ecr.us-east-1.amazonaws.com')"
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
   type        = string
-}
-
-variable "repository_name" {
-  description = "Repository name (e.g., 'clients-code', 'user-api-v2')"
-  type        = string
+  default     = "prod"
 }
 
 variable "service_name" {
   description = "Service name for description and tagging"
   type        = string
-  default     = ""
-}
-
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
-  type        = string
-  default    = "prod"
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be one of: dev, staging, prod."
-  }
+  default     = "Clients Code Repository"
 }
 
 variable "common_tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default     = {
-    Project     = "Temple Management"
+    Project     = "Client Application Management"
     ManagedBy   = "Terraform"
     Owner       = "DevOps Team"
     CostCenter  = "Engineering"
   }
 }
 
-variable "scan_on_push" {
-  description = "Enable image scanning on push"
-  type        = bool
-  default     = true
+# Optional configuration for tracking purposes
+variable "project_description" {
+  description = "Description of the project using this public ECR"
+  type        = string
+  default     = "Reference to public ECR repository for client applications"
 }
 
-variable "image_tag_mutability" {
-  description = "Image tag mutability setting"
-  type        = string
-  default     = "MUTABLE"
+variable "lambda_function_names" {
+  description = "List of Lambda function names that will use this public ECR repository"
+  type        = list(string)
+  default     = []
 }

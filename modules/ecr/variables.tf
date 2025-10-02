@@ -1,12 +1,12 @@
 # Variables for ECR Repository Module
 
 variable "ecr_registry" {
-  description = "Full ECR registry URL (e.g., 'public.ecr.aws/x7o9n0b1', '123456789012.dkr.ecr.us-east-1.amazonaws.com')"
+  description = "Private ECR registry URL (e.g., '123456789012.dkr.ecr.us-east-1.amazonaws.com')"
   type        = string
 }
 
 variable "ecr_repository" {
-  description = "ECR repository name (will be extracted from ecr_registry if not provided)"
+  description = "ECR repository name for Lambda function"
   type        = string
   default     = ""
 }
@@ -49,36 +49,6 @@ variable "description" {
   default     = ""
 }
 
-variable "architectures" {
-  description = "Supported architectures for public ECR repository"
-  type        = list(string)
-  default     = ["x86-64", "arm64"]
-}
-
-variable "operating_systems" {
-  description = "Supported operating systems for public ECR repository"
-  type        = list(string)
-  default     = ["Linux"]
-}
-
-variable "about_text" {
-  description = "About text for public ECR repository catalog"
-  type        = string
-  default     = ""
-}
-
-variable "usage_text" {
-  description = "Usage text for public ECR repository catalog"
-  type        = string
-  default     = ""
-}
-
-variable "logo_image_blob" {
-  description = "Logo image blob for public ECR repository catalog (base64 encoded)"
-  type        = string
-  default     = ""
-}
-
 variable "lifecycle_policy" {
   description = "Lifecycle policy JSON for private ECR repository"
   type        = string
@@ -86,7 +56,7 @@ variable "lifecycle_policy" {
 }
 
 variable "max_images" {
-  description = "Maximum number of images to retain in the repository. When exceeded, oldest images will be deleted."
+  description = "Maximum number of tagged Docker images to retain in the repository (for Lambda deployments). When exceeded, oldest images will be deleted automatically."
   type        = number
   default     = 10
   validation {
@@ -96,7 +66,7 @@ variable "max_images" {
 }
 
 variable "untagged_image_retention_days" {
-  description = "Number of days to retain untagged images before deletion"
+  description = "Number of days to retain untagged Docker images (intermediate build layers) before deletion. Set to 0 to delete immediately."
   type        = number
   default     = 1
   validation {
@@ -106,15 +76,9 @@ variable "untagged_image_retention_days" {
 }
 
 variable "enable_automatic_lifecycle_policy" {
-  description = "Enable automatic lifecycle policy creation based on max_images and untagged_image_retention_days"
+  description = "Enable automatic lifecycle policy creation to manage Docker image retention"
   type        = bool
   default     = true
-}
-
-variable "lifecycle_policy_priority_tag_prefix" {
-  description = "Tage prefix to prioritize for image retention (e.g., 'v', 'release', 'prod')"
-  type        = string
-  default     = "v"
 }
 
 variable "repository_policy" {

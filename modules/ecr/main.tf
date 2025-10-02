@@ -1,23 +1,27 @@
 # ECR Repository Module
 # Creates ECR repositories based on provided registry and repository name
 
-# Data source to detect if we're using AWS Public ECR
-data "external" "ecr_registry_info" {
-  program = ["bash", "${path.module}/detect_ecr_type.sh", var.ecr_registry]
-}
-
+# Extract registry information for private ECR
 locals {
-  is_public_ecr = data.external.ecr_registry_info.result["is_public_ecr"]
-  registry_id   = data.external.ecr_registry_info.result["registry_id"]
-  repo_name     = data.external.ecr_registry_info.result["repo_name"]
-  aws_account   = data.external.ecr_registry_info.result["aws_account"]
-  aws_region    = data.external.ecr_registry_info.result["aws_region"]
+  registry_id = var.ecr_registry
+  repo_name   = var.ecr_repository != "" ? var.ecr_repository : "lambda-${random_string.repo_suffix.result}"
+  
+  # Extract AWS account and region from registry URL
+  aws_account = replace(var.ecr_registry, "/([0-9]+)\\.dkr\\.ecr\\.(.+)\\.amazonaws\\.com/", "$1")
+  aws_region  = replace(var.ecr_registry, "/([0-9]+)\\.dkr\\.ecr\\.(.+)\\.amazonaws\\.com/", "$2")
 }
 
-# Private ECR Repository (for private ECR)
+# Generate random suffix for repository name if not provided
+resource "random_string" "repo_suffix" {
+  count   = var.ecr_repository == "" ? 1 : 0
+  length  = 8
+  special = false
+  lower   = true
+  upper   = false
+}
+
+# Private ECR Repository
 resource "aws_ecr_repository" "private_repo" {
-  count = local.is_public_ecr == "false" ? 1 : 0
-  
   name                 = local.repo_name
   image_tag_mutability = var.image_tag_mutability
   
@@ -27,6 +31,7 @@ resource "aws_ecr_repository" "private_repo" {
   
   encryption_configuration {
     encryption_type = var.encryption_type
+    kms_key_id      = var.kms_key_id
   }
   
   force_delete = var.force_delete
@@ -36,30 +41,8 @@ resource "aws_ecr_repository" "private_repo" {
     Type        = "Private ECR Repository"
     Repository  = "ECR"
     ManagedBy   = "Terraform"
-  })
-}
-
-# Public ECR Repository (for AWS Public ECR)
-resource "aws_ecrpublic_repository" "public_repo" {
-  count = local.is_public_ecr == "true" ? 1 : 0
-  
-  repository_name = local.repo_name
-  
-  catalog_data {
-    description     = var.description != "" ? var.description : "Public ECR repository for ${local.repo_name}"
-    architectures   = var.architectures
-    operating_systems = var.operating_systems
-    
-    about_text      = var.about_text
-    usage_text      = var.usage_text
-    logo_image_blob = var.logo_image_blob
-  }
-  
-  tags = merge(var.tags, {
-    Name        = local.repo_name
-    Type        = "Public ECR Repository"
-    Repository  = "ECR-Public"
-    ManagedBy   = "Terraform"
+    Environment = var.environment
+    Project     = var.project_name
   })
 }
 
@@ -67,85 +50,56 @@ resource "aws_ecrpublic_repository" "public_repo" {
 locals {
   # Create automatic lifecycle policy if enabled and no custom policy provided
   auto_lifecycle_policy = var.enable_automatic_lifecycle_policy ? jsonencode({
-    rules = concat(
-      # Rule 1: Keep only max_images for tagged images with priority prefix
-      [
-        {
-          rulePriority = 1
-          description  = "Keep last ${var.max_images} images with '${var.lifecycle_policy_priority_tag_prefix}' prefix"
-          selection = {
-            tagStatus     = "tagged"
-            tagPrefixList = [var.lifecycle_policy_priority_tag_prefix]
-            countType     = "imageCountMoreThan"
-            countNumber   = var.max_images
-          }
-          action = {
-            type = "expire"
-          }
+    rules = [
+      # Rule 1: Keep only max_images tagged images (simple Docker image retention)
+      {
+        rulePriority = 1
+        description  = "Keep last ${var.max_images} tagged Docker images"
+        selection = {
+          tagStatus   = "tagged"
+          countCategory = "imageCountMoreThan"
+          countNumber   = var.max_images
         }
-      ],
-      # Rule 2: Keep only max_images for all other tagged images
-      [
-        {
-          rulePriority = 2
-          description  = "Keep last ${var.max_images} tagged images (excluding '${var.lifecycle_policy_priority_tag_prefix}' prefix)"
-          selection = {
-            tagStatus     = "tagged"
-            countType     = "imageCountMoreThan"
-            countNumber   = var.max_images
-          }
-          action = {
-            type = "expire"
-          }
+        action = {
+          type = "expire"
         }
-      ],
-      # Rule 3: Delete untagged images after specified days
-      var.untagged_image_retention_days > 0 ? [
-        {
-          rulePriority = 3
-          description  = "Delete untagged images after ${var.untagged_image_retention_days} days"
-          selection = {
-            tagStatus     = "untagged"
-            countType     = "sinceImagePushed"
-            countUnit     = "days"
-            countNumber   = var.untagged_image_retention_days
-          }
-          action = {
-            type = "expire"
-          }
+      },
+      # Rule 2: Delete untagged images after specified days (cleanup intermediate layers)
+      {
+        rulePriority = 2
+        description  = "Delete untagged images after ${var.untagged_image_retention_days} days"
+        selection = {
+          tagStatus     = "untagged"
+          countCategory = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = var.untagged_image_retention_days
         }
-      ] : []
-    )
+        action = {
+          type = "expire"
+        }
+      }
+    ]
   }) : null
   
   # Final lifecycle policy - use custom policy if provided, otherwise use auto-generated
-  final_lifecycle_policy = local.is_public_ecr == "false" && var.lifecycle_policy != null ? 
+  final_lifecycle_policy = var.lifecycle_policy != null ? 
     var.lifecycle_policy : local.auto_lifecycle_policy
 }
 
-# Lifecycle policy for private ECR repository
-resource "aws_ecr_lifecycle_policy" "private_repo_policy" {
-  count = local.is_public_ecr == "false" && local.final_lifecycle_policy != null ? 1 : 0
+# Lifecycle policy for ECR repository
+resource "aws_ecr_lifecycle_policy" "repo_policy" {
+  count = local.final_lifecycle_policy != null ? 1 : 0
   
-  repository = aws_ecr_repository.private_repo[0].name
+  repository = aws_ecr_repository.private_repo.name
   
   policy = local.final_lifecycle_policy
 }
 
-# Repository policy for private ECR repository
-resource "aws_ecr_repository_policy" "private_repo_policy" {
-  count = local.is_public_ecr == "false" && var.repository_policy != null ? 1 : 0
+# Repository policy for ECR repository
+resource "aws_ecr_repository_policy" "repo_policy" {
+  count = var.repository_policy != null ? 1 : 0
   
-  repository = aws_ecr_repository.private_repo[0].name
+  repository = aws_ecr_repository.private_repo.name
   
-  policy = var.repository_policy
-}
-
-# Public repository policy for AWS Public ECR
-resource "aws_ecrpublic_repository_policy" "public_repo_policy" {
-  count = local.is_public_ecr == "true" && var.repository_policy != null ? 1 : 0
-  
-  repository_name = aws_ecrpublic_repository.public_repo[0].repository_name
-  
-  policy = var.repository_policy
+   policy = var.repository_policy
 }
