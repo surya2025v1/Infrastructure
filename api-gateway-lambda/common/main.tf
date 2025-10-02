@@ -42,6 +42,35 @@ data "aws_secretsmanager_secret" "db_credentials" {
   name = var.db_credentials_secret_name
 }
 
+# Security Group for Lambda Functions
+resource "aws_security_group" "lambda" {
+  name_prefix = "lambda-common-"
+  description = "Security group for Lambda functions"
+  vpc_id      = var.vpc_id
+
+  # Outbound to internet
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Outbound to RDS (MySQL)
+  egress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = var.lambda_to_rds_security_groups
+  }
+
+  tags = merge(var.tags, {
+    Name        = "lambda-common-sg"
+    Component   = "Security-Group-Lambda"
+    Description = "Lambda function security group for common resources"
+  })
+}
+
 # Multiple Lambda Functions
 module "lambda_functions" {
   source   = "../../modules/lambda"
@@ -66,6 +95,14 @@ module "lambda_functions" {
   s3_key            = each.value.s3_key
   s3_object_version = each.value.s3_object_version
   rds_secret_name   = var.rds_secret_name
+  
+  # VPC Configuration
+  vpc_subnet_ids         = each.value.vpc_subnet_ids
+  vpc_security_group_ids = [aws_security_group.lambda.id]
+  
+  # ECR Configuration
+  use_ecr_image  = each.value.use_ecr_image
+  ecr_image_uri  = each.value.ecr_image_uri
 }
 
 # Create map of Lambda function names to their invoke ARNs

@@ -1,5 +1,6 @@
 # AWS Configuration
 aws_region = "us-east-2"
+vpc_id = "vpc-02dc931bd682cb846"
 
 # Environment Configuration
 environment   = "prod"

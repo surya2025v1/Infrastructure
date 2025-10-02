@@ -5,6 +5,17 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
+variable "vpc_id" {
+  description = "VPC ID where Lambda functions will be deployed"
+  type        = string
+}
+
+variable "lambda_to_rds_security_groups" {
+  description = "Security groups for Lambda to RDS connections"
+  type        = list(string)
+  default     = []
+}
+
 # Environment Configuration
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
@@ -294,6 +305,9 @@ variable "lambda_functions" {
     s3_object_version      = string
     create                 = bool
     delete                 = bool
+    # ECR Configuration (optional)
+    use_ecr_image          = optional(bool, false)
+    ecr_image_uri          = optional(string, "")
     # RDS Connection Configuration (optional)
     enable_rds_connection  = optional(bool, false)
     rds_secret_name        = optional(string, "")
