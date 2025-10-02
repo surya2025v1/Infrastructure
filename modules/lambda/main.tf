@@ -61,6 +61,12 @@ resource "aws_lambda_function" "this" {
     variables = local.lambda_environment_variables
   }
 
+  # VPC Configuration
+  vpc_config {
+    subnet_ids         = var.vpc_subnet_ids
+    security_group_ids = var.vpc_security_group_ids
+  }
+
   tags = merge(var.tags, {
     Environment   = var.environment
     controlled_by = var.controlled_by

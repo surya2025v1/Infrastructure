@@ -119,4 +119,17 @@ variable "lambda_package_type" {
     condition     = contains(["Zip", "Image"], var.lambda_package_type)
     error_message = "Lambda package type must be either 'Zip' or 'Image'."
   }
+}
+
+# VPC Configuration
+variable "vpc_subnet_ids" {
+  description = "List of subnet IDs for Lambda function VPC configuration"
+  type        = list(string)
+  default     = []
+}
+
+variable "vpc_security_group_ids" {
+  description = "List of security group IDs for Lambda function VPC configuration"
+  type        = list(string)
+  default     = []
 } 

@@ -10,11 +10,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "lambda_to_rds_security_groups" {
-  description = "Security groups for Lambda to RDS connections"
-  type        = list(string)
-  default     = []
-}
 
 # Environment Configuration
 variable "environment" {

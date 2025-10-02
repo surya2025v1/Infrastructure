@@ -170,6 +170,17 @@ output "api_documentation_urls" {
   }
 }
 
+# Lambda Security Group Output
+output "lambda_security_group_id" {
+  description = "ID of the Lambda security group for RDS connections"
+  value       = aws_security_group.lambda.id
+}
+
+output "lambda_security_group_arn" {
+  description = "ARN of the Lambda security group"
+  value       = aws_security_group.lambda.arn
+}
+
 # Security Summary
 output "security_summary" {
   description = "Summary of security configurations"
@@ -183,6 +194,7 @@ output "security_summary" {
     quota_limit            = var.quota_limit
     api_keys_count         = length(var.api_keys)
     security_headers_count = length(var.security_headers)
+    lambda_sg_id          = aws_security_group.lambda.id
   }
 }
 
