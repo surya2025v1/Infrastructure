@@ -1,9 +1,9 @@
-# Public ECR Repository Configuration for Client Applications
-# References existing public ECR repository: public.ecr.aws/x7o9n0b1/clients-code
-# Provides configuration for Lambda functions to use this public repository
+# Terraform configuration for ECR repository
+# This file references the ECR module
 
 terraform {
   required_version = ">= 1.0"
+  
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -12,64 +12,56 @@ terraform {
   }
 }
 
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state-bucket-20250701"
+    key            = "global/ecr/user-api-v1/terraform.tfstate"
+    region         = "us-east-2"
+    dynamodb_table = "TerraformStateLock"
+    encrypt        = true
+  }
+}
+
+# Configure AWS Provider
 provider "aws" {
-  region = "us-east-1"
-}
-
-# Public ECR repository information (no data source needed)
-locals {
-  public_registry_url      = "public.ecr.aws/x7o9n0b1/clients-code"
-  repository_name          = "clients-code"
-  repository_url           = "public.ecr.aws/x7o9n0b1/clients-code"
-  registry_id             = "x7o9n0b1"
-  registry_region         = "us-east-1"
-}
-
-output "public_ecr_repository_url" {
-  description = "Public ECR repository URL for Lambda container images"
-  value       = local.public_registry_url
-}
-
-output "public_ecr_repository_metadata" {
-  description = "Public ECR repository metadata"
-  value = {
-    name           = local.repository_name
-    repository_url = local.repository_url
-    registry_id    = local.registry_id
-    region         = local.registry_region
-  }
-}
-
-output "usage_instructions" {
-  description = "Instructions for using the public ECR repository"
-  value = {
-    docker_pull_command = "docker pull ${local.public_registry_url}:latest"
-    lambda_image_uri = "${local.repository_url}:latest"
-    public_read_access = "This repository is publicly accessible and can be used by Lambda functions without additional permissions"
-    authentication_required = false
-  }
-}
-
-# Resource tags for tracking
-data "aws_caller_identity" "current" {}
-
-locals {
-  resource_tags = merge(var.common_tags, {
-    RepositoryType = "Public ECR Reference"
-    Environment   = var.environment
-    ServiceName   = var.service_name
-    Project       = "Client Code Management"
-    Owner         = "DevOps Team"
-  })
-}
-
-resource "null_resource" "repository_info" {
-  provisioner "local-exec" {
-    command = "echo 'Public ECR Repository Reference Configured: public.ecr.aws/x7o9n0b1/clients-code'"
-  }
+  region = var.aws_region
   
-  triggers = {
-    repository_url = local.repository_url
-    timestamp     = timestamp()
+  default_tags {
+    tags = {
+      Project     = "ECRRepositories"
+      Environment = var.environment
+      Repository  = var.repository_name
+      ManagedBy   = "Terraform"
+      Purpose     = "Lambda Function Storage"
+    }
   }
+}
+
+# ECR Repository Module
+module "ecr_repository" {
+  source = "../modules/ecr"
+
+  # AWS account and region
+  ecr_registry = var.ecr_registry
+  ecr_repository = var.repository_name
+  
+  description = var.service_description
+  image_tag_mutability = var.image_tag_mutability
+  scan_on_push = var.scan_on_push
+  encryption_type = var.encryption_type
+  
+  # Repository policy allowing GitHub Actions and Lambda access
+  repository_policy = var.repository_policy
+  
+  # Automatic Image Retention Configuration
+  max_images = var.max_images
+  untagged_image_retention_days = var.untagged_image_retention_days
+  enable_automatic_lifecycle_policy = var.enable_automatic_lifecycle_policy
+  
+  tags = merge(var.tags, {
+    Service = var.service_name
+    Type    = "Lambda Function Repository"
+    Client  = var.client
+    controlled_by = var.controlled_by
+  })
 }
