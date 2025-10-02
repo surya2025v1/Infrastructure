@@ -29,6 +29,7 @@ module "ecr_repository" {
   source = "../modules/ecr"
   
   repository_name = var.repository_name
+  aws_region     = var.aws_region
   
   tags = {
     Environment = var.environment
