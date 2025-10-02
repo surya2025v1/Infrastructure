@@ -43,11 +43,10 @@ output "lambda_usage_instructions" {
 output "repository_info" {
   description = "Complete repository information"
   value = {
-    name        = data.aws_ecr_repository.public_clients_code.name
+    name           = data.aws_ecr_repository.public_clients_code.name
     repository_url = data.aws_ecr_repository.public_clients_code.repository_url
-    registry_id = data.aws_ecr_repository.public_clients_code.registry_id
-    arn         = data.aws_ecr_repository.public_clients_code.arn
-    created_at  = data.aws_ecr_repository.public_clients_code.created_at
-    tags        = data.aws_ecr_repository.public_clients_code.tags
+    registry_id    = data.aws_ecr_repository.public_clients_code.registry_id
+    arn            = data.aws_ecr_repository.public_clients_code.arn
+    tags           = data.aws_ecr_repository.public_clients_code.tags
   }
 }
