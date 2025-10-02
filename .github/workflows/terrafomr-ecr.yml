@@ -40,7 +40,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     environment: prod
-    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.modified, ' '), 'modules/ecr/') || contains(join(github.event.commits.*.added, ' '), 'modules/ecr/')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'ecr') || contains(github.event.head_commit.message, 'terraform') || github.ref == 'refs/heads/master'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
