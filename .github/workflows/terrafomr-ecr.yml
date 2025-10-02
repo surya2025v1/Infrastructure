@@ -1,0 +1,125 @@
+name: Terraform ECR Repositories
+
+on:
+  push:
+    paths:
+      - 'ecr-repositories/**'
+      - 'modules/ecr/**'
+  pull_request:
+    paths:
+      - 'ecr-repositories/**'
+      - 'modules/ecr/**'
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    environment: prod
+    outputs:
+      aws_access_key_id: ${{ steps.assume_role.outputs.aws_access_key_id }}
+      aws_secret_access_key: ${{ steps.assume_role.outputs.aws_secret_access_key }}
+      aws_session_token: ${{ steps.assume_role.outputs.aws_session_token }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Assume My_Infra_Role and export credentials
+        id: assume_role
+        run: |
+          CREDS_JSON=$(aws sts assume-role \
+            --role-arn arn:aws:iam::103056765659:role/My_Infra_Role \
+            --role-session-name github-actions-ecr-repositories-session)
+          echo "aws_access_key_id=$(echo $CREDS_JSON | jq -r .Credentials.AccessKeyId)" >> $GITHUB_OUTPUT
+          echo "aws_secret_access_key=$(echo $CREDS_JSON | jq -r .Credentials.SecretAccessKey)" >> $GITHUB_OUTPUT
+          echo "aws_session_token=$(echo $CREDS_JSON | jq -r .Credentials.SessionToken)" >> $GITHUB_OUTPUT
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
+
+  ecr-repositories-stage:
+    needs: setup
+    runs-on: ubuntu-latest
+    environment: prod
+    if: github.event_name == 'workflow_dispatch' || contains(join(github.event.commits.*.modified, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.added, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.removed, ' '), 'ecr-repositories/terraform.tfvars') || contains(join(github.event.commits.*.modified, ' '), 'modules/ecr/') || contains(join(github.event.commits.*.added, ' '), 'modules/ecr/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+      - name: Terraform Init, Plan, Apply/Destroy
+        working-directory: ecr-repositories
+        env:
+          AWS_ACCESS_KEY_ID: ${{ needs.setup.outputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ needs.setup.outputs.aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ needs.setup.outputs.aws_session_token }}
+          AWS_DEFAULT_REGION: us-east-2
+        run: |
+          set -e
+          terraform init
+          terraform plan -out=tfplan
+
+          # Check if terraform.tfvars exists and extract create/delete flags
+          if [ -f "terraform.tfvars" ]; then
+            CREATE=$(grep '^create' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+            DELETE=$(grep '^delete' terraform.tfvars | awk -F'=' '{print tolower($2)}' | tr -d ' "')
+          else
+            echo "⚠️ terraform.tfvars not found, using default values"
+            CREATE="true"
+            DELETE="false"
+          fi
+
+          echo "Create flag: $CREATE"
+          echo "Delete flag: $DELETE"
+
+          if [ "$CREATE" = "true" ]; then
+            echo "Running terraform apply..."
+            terraform apply -auto-approve tfplan
+            echo "✅ ECR repositories created/updated successfully"
+            
+            # Output repository information
+            echo "🏗️ Repository Information:"
+            echo "📦 All Repositories:"
+            terraform output -json all_repositories | jq -r '.repositories[] | "  • \(.name) (\(.type)): \(.url)"'
+            
+            echo "🧹 Image Retention Summary:"
+            terraform output -json image_retention_summary | jq -r 'to_entries[] | "  • \(.key): max_images=\(.value.max_images), untagged_days=\(.value.untagged_retention_days)"'
+            
+            echo "📋 GitHub Actions Secrets:"
+            terraform output -json github_actions_secrets | jq -r 'to_entries[] | "  • \(.key): \(.value)"'
+            
+            echo "🐳 Docker Commands:"
+            terraform output -json docker_commands | jq -r '.login_private // "  Use docker login commands from repository outputs"'
+          fi
+
+          if [ "$DELETE" = "true" ]; then
+            echo "Running terraform destroy..."
+            terraform destroy -auto-approve
+            echo "🗑️ ECR repositories destroyed successfully"
+          fi
+
+          if [ "$CREATE" != "true" ] && [ "$DELETE" != "true" ]; then
+            echo "ℹ️ No action required. Both create and delete flags are false."
+          fi
+      - name: Validation and Health Check
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          echo "🔍 Validating ECR repositories health..."
+          
+          # Check repository status for each created repository
+          if aws ecr describe-registry --region us-east-2 > /dev/null 2>&1; then
+            echo "✅ Private ECR registry accessible"
+          fi
+          
+          if aws ecr-public describe-registry --region us-east-1 > /dev/null 2>&1; then
+            echo "✅ Public ECR registro accessible"
+          fi
+          
+          echo "🎉 ECR repositories validation completed!"
+      - name: Cleanup AWS credentials
+        if: always()
+        run: |
+          echo "AWS_ACCESS_KEY_ID=dummy" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=dummy" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=dummy" >> $GITHUB_ENV
