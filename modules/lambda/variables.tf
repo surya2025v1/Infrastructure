@@ -96,4 +96,27 @@ variable "rds_secret_name" {
   description = "The name of the AWS Secrets Manager secret containing RDS connection details"
   type        = string
   default     = ""
+}
+
+# ECR Configuration Variables
+variable "use_ecr_image" {
+  description = "Flag to enable ECR image as Lambda source instead of S3/zip"
+  type        = bool
+  default     = false
+}
+
+variable "ecr_image_uri" {
+  description = "Full ECR image URI for Lambda function (e.g., account.dkr.ecr.region.amazonaws.com/repo:tag)"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_package_type" {
+  description = "Lambda package type - either 'Zip' or 'Image'"
+  type        = string
+  default     = "Zip"
+  validation {
+    condition     = contains(["Zip", "Image"], var.lambda_package_type)
+    error_message = "Lambda package type must be either 'Zip' or 'Image'."
+  }
 } 

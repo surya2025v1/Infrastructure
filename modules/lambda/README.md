@@ -1,10 +1,11 @@
-# Lambda Module with RDS MySQL Connection
+# Lambda Module with RDS MySQL Connection and ECR Support
 
-This Terraform module creates an AWS Lambda function with optional RDS MySQL connection capabilities using AWS Secrets Manager.
+This Terraform module creates an AWS Lambda function with optional RDS MySQL connection capabilities using AWS Secrets Manager, and supports both S3/ZIP packages and ECR container images.
 
 ## Features
 
 - Create Lambda functions with custom runtime and configuration
+- Support for both S3/ZIP packages (default) and ECR container images
 - Automatic RDS MySQL connection setup using AWS Secrets Manager
 - VPC configuration support
 - Security group management for Lambda-RDS communication
@@ -33,9 +34,18 @@ Alternative field names are also supported:
 - `database` or `dbname`
 - `port` (defaults to 3306 if not specified)
 
+## Package Types
+
+The module supports two package types:
+
+1. **S3/ZIP Package (Default)**: Traditional Lambda deployment packages stored in S3 or local ZIP files
+2. **ECR Container Image**: Container images stored in Amazon Elastic Container Registry (ECR)
+
+By default, the module uses S3/ZIP packages to maintain backward compatibility with existing deployments.
+
 ## Usage
 
-### Basic Lambda Function
+### Basic Lambda Function with S3/ZIP Package (Default)
 
 ```hcl
 module "lambda" {
@@ -45,6 +55,48 @@ module "lambda" {
   handler       = "index.handler"
   runtime       = "nodejs18.x"
   role_arn      = aws_iam_role.lambda_role.arn
+  
+  environment = "dev"
+  client      = "myclient"
+}
+```
+
+### Lambda Function with ECR Container Image
+
+```hcl
+module "lambda" {
+  source = "./modules/lambda"
+  
+  function_name = "my-lambda-function"
+  role_arn      = aws_iam_role.lambda_role.arn
+  
+  # Enable ECR container image
+  use_ecr_image = true
+  ecr_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-lambda-repo:latest"
+  
+  # When using ECR images, handler and runtime are not required
+  # The container image must include the Lambda runtime interface client
+  
+  environment = "dev"
+  client      = "myclient"
+}
+```
+
+### Lambda Function with S3 Package
+
+```hcl
+module "lambda" {
+  source = "./modules/lambda"
+  
+  function_name = "my-lambda-function"
+  handler       = "index.handler"
+  runtime       = "nodejs18.x"
+  role_arn      = aws_iam_role.lambda_role.arn
+  
+  # S3 deployment package configuration
+  s3_bucket = "my-lambda-deployments"
+  s3_key    = "functions/my-function.zip"
+  s3_object_version = "1" # Optional: specific version
   
   environment = "dev"
   client      = "myclient"
@@ -119,6 +171,38 @@ When RDS connection is enabled, the following environment variables are automati
 - `RDS_PASSWORD`: The database password
 - `RDS_CONNECTION_TIMEOUT`: Connection timeout in seconds
 - `RDS_MAX_CONNECTIONS`: Maximum number of connections in the pool
+
+## ECR Configuration
+
+When using ECR container images:
+
+- Set `use_ecr_image = true`
+- Provide the full ECR image URI in `ecr_image_uri`
+- Ensure the container image includes the Lambda runtime interface client
+- The Lambda execution role must have appropriate ECR permissions
+- Handler and runtime are not required for container images
+
+### ECR IAM Permissions
+
+The Lambda execution role must have the following permissions for ECR access:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    }
+  }
+}
+```
 
 ## Required IAM Permissions
 

@@ -37,19 +37,25 @@ resource "aws_lambda_function" "this" {
   count = var.create ? 1 : 0
 
   function_name = var.function_name
-  handler       = var.handler
-  runtime       = var.runtime
+  package_type  = var.use_ecr_image ? "Image" : var.lambda_package_type
   role          = var.role_arn
   memory_size   = var.memory_size
   timeout       = var.timeout
 
-  # Use S3 deployment if bucket is provided, otherwise use local file
-  s3_bucket = var.s3_bucket != "" ? var.s3_bucket : null
-  s3_key    = var.s3_key != "" ? var.s3_key : null
-  s3_object_version = var.s3_object_version != "" ? var.s3_object_version : null
+  # ECR Image Configuration
+  image_uri = var.use_ecr_image ? var.ecr_image_uri : null
 
-  # Use local file if S3 not configured
-  filename = var.s3_bucket == "" ? "${path.module}/placeholder.zip" : null
+  # S3 deployment configuration
+  s3_bucket         = (!var.use_ecr_image && var.s3_bucket != "") ? var.s3_bucket : null
+  s3_key            = (!var.use_ecr_image && var.s3_key != "") ? var.s3_key : null
+  s3_object_version = (!var.use_ecr_image && var.s3_object_version != "") ? var.s3_object_version : null
+
+  # Handler and runtime only for Zip packages
+  handler = var.use_ecr_image ? null : var.handler
+  runtime = var.use_ecr_image ? null : var.runtime
+
+  # Use local file if S3 not configured and not using ECR
+  filename = (!var.use_ecr_image && var.s3_bucket == "") ? "${path.module}/placeholder.zip" : null
 
   environment {
     variables = local.lambda_environment_variables
