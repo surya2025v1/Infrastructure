@@ -22,3 +22,15 @@ variable "service_name" {
   type        = string
   default     = "Lambda Service"
 }
+
+variable "create" {
+  description = "Flag to enable creation of resources"
+  type        = bool
+  default     = true
+}
+
+variable "delete" {
+  description = "Flag to enable deletion of resources"
+  type        = bool
+  default     = false
+}

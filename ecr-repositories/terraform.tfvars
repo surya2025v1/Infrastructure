@@ -2,3 +2,7 @@
 repository_name = "user-api-v1"
 service_name = "Temple User API"
 environment = "prod"
+
+# Pipeline control flags
+create = true
+delete = false
