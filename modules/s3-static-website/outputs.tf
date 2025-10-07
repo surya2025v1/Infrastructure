@@ -38,4 +38,32 @@ output "cloudfront_domain_name" {
 output "cloudfront_distribution_arn" {
   description = "The ARN of the CloudFront distribution"
   value       = var.enable_cloudfront ? aws_cloudfront_distribution.website_distribution[0].arn : null
+}
+
+output "cloudfront_distribution_status" {
+  description = "The current status of the CloudFront distribution"
+  value       = var.enable_cloudfront ? aws_cloudfront_distribution.website_distribution[0].status : null
+}
+
+output "cloudfront_hosted_zone_id" {
+  description = "The CloudFront Route 53 zone ID that can be used to route an Alias Resource Record Set to"
+  value       = var.enable_cloudfront ? aws_cloudfront_distribution.website_distribution[0].hosted_zone_id : null
+}
+
+output "cloudfront_distribution_url" {
+  description = "The URL of the CloudFront distribution"
+  value       = var.enable_cloudfront ? "https://${aws_cloudfront_distribution.website_distribution[0].domain_name}" : null
+}
+
+output "cloudfront_origin_access_identity" {
+  description = "The CloudFront origin access identity (if using OAI)"
+  value       = null  # Not using OAI in this configuration, using website endpoint instead
+}
+
+output "website_urls" {
+  description = "Available website URLs (S3 direct and CloudFront if enabled)"
+  value = {
+    s3_website_url = "http://${aws_s3_bucket_website_configuration.website_bucket.website_endpoint}"
+    cloudfront_url = var.enable_cloudfront ? "https://${aws_cloudfront_distribution.website_distribution[0].domain_name}" : null
+  }
 } 
