@@ -167,7 +167,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     max_ttl     = 0
   }
 
-  # Cache behavior for CSS and JS files (long caching)
+  # Cache behavior for CSS files (long caching)
   ordered_cache_behavior {
     path_pattern           = "*.css"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
@@ -188,6 +188,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     max_ttl     = 31536000  # 1 year
   }
 
+  # Cache behavior for JS files (long caching)
   ordered_cache_behavior {
     path_pattern           = "*.js"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
@@ -208,9 +209,129 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     max_ttl     = 31536000  # 1 year
   }
 
-  # Cache behavior for images (long caching)
+  # Cache behavior for images - separate behaviors for each extension
   ordered_cache_behavior {
-    path_pattern           = "*.{jpg,jpeg,png,gif,ico,svg,webp}"
+    path_pattern           = "*.jpg"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.jpeg"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.png"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.gif"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.ico"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.svg"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 86400  # 1 day
+    max_ttl     = 31536000  # 1 year
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "*.webp"
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     target_origin_id       = "S3-Website-${aws_s3_bucket.website_bucket.bucket}"
