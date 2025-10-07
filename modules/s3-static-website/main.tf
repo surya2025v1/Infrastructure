@@ -122,12 +122,6 @@ resource "aws_cloudfront_distribution" "website_distribution" {
       origin_protocol_policy = "http-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
-
-    # Add origin custom headers if needed
-    origin_custom_header {
-      name  = "X-Forwarded-Proto"
-      value = "https"
-    }
   }
 
   # Default cache behavior for all files
