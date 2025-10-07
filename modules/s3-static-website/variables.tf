@@ -112,10 +112,10 @@ variable "cloudfront_acm_certificate_arn" {
 variable "cloudfront_minimum_protocol_version" {
   description = "The minimum version of the SSL protocol that you want CloudFront to use for HTTPS connections"
   type        = string
-  default     = "TLSv1.2"
+  default     = "TLSv1.2_2021"
   validation {
-    condition     = contains(["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"], var.cloudfront_minimum_protocol_version)
-    error_message = "CloudFront minimum protocol version must be one of: SSLv3, TLSv1, TLSv1.1, TLSv1.2, TLSv1.3."
+    condition     = contains(["SSLv3", "TLSv1", "TLSv1_2016", "TLSv1.1_2016", "TLSv1.2_2018", "TLSv1.2_2019", "TLSv1.2_2021"], var.cloudfront_minimum_protocol_version)
+    error_message = "CloudFront minimum protocol version must be one of: SSLv3, TLSv1, TLSv1_2016, TLSv1.1_2016, TLSv1.2_2018, TLSv1.2_2019, TLSv1.2_2021."
   }
 }
 
